@@ -1,7 +1,6 @@
 // lib/init.js
 import fs from 'fs-extra';
 import path from 'path';
-import os from 'os';
 import YAML from 'yaml';
 import chalk from 'chalk';
 
@@ -19,7 +18,9 @@ const DEFAULT_FLUX_YML = (framework) => ({
         export_method: 'app-store'
     },
     playstore: {
-        service_account_json: './keys/playstore.json'
+        service_account_json: './keys/playstore.json',
+        package_name: "", // e.g. com.yourapp.packagename
+        default_track: "internal", // internal | alpha | beta | production
     },
     versioning: {
         strategy: 'auto' // options: auto, manual

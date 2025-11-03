@@ -5,6 +5,7 @@ import { cleanCommand } from "./commands/clean.js";
 import { infoCommand } from "./commands/info.js";
 import { initCommand } from "./commands/init.js";
 import { buildCommand } from "./commands/build.js";
+import { deployCommand } from "./commands/deploy.js";
 
 
 const program = new Command();
@@ -49,5 +50,34 @@ program
     .option("--release-type <type>", "Build type: apk or aab", "apk")
     .option("--output-dir <path>", "Output directory for build artifacts", "./dist")
     .action(async (opts) => { await buildCommand(opts); });
+
+
+program
+    .command("deploy")
+    .description("Upload APK/AAB to Google Play")
+    .option("--artifact <path>", "Path to .apk or .aab (default: ./dist/*)")
+    .option("--track <name>", "Play track to release to (internal|alpha|beta|production)", "internal")
+    .option("--notes <text>", "Release notes (string or JSON object)")
+    .option("--key <path>", "Override path to service account JSON")
+    .option("--dry-run", "Validate without committing", false)
+    .action(async (opts) => {
+        await deployCommand({
+            artifact: opts.artifact,
+            track: opts.track,
+            notes: parseNotesOption(opts.notes),
+            key: opts.key,
+            dryRun: opts.dryRun,
+        });
+    });
+
+function parseNotesOption(notes) {
+    if (!notes) return null;
+    // if user passed JSON-like string, try parse
+    try {
+        return JSON.parse(notes);
+    } catch {
+        return notes; // plain string
+    }
+}
 
 program.parse(process.argv);
