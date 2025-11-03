@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
-import chalk from 'chalk';
-import { execa } from 'execa';
-import ora from 'ora';
-import fs from 'fs';
-import YAML from 'yaml';
+import { doctorCommand } from "./commands/doctor.js";
+import { cleanCommand } from "./commands/clean.js";
+import { infoCommand } from "./commands/info.js";
+import { initCommand } from "./commands/init.js";
+import { buildCommand } from "./commands/build.js";
+
 
 const program = new Command();
 
@@ -26,4 +27,27 @@ program
         }
     });
 
-program.parse();
+program
+    .command("doctor")
+    .description("Check your system environment")
+    .action(doctorCommand);
+
+program
+    .command("clean")
+    .description("Clean build artifacts")
+    .action(cleanCommand);
+
+program
+    .command("info")
+    .description("Show project and system info")
+    .action(infoCommand);
+
+
+program
+    .command("build")
+    .description("Build Flutter or React Native project (APK or AAB)")
+    .option("--release-type <type>", "Build type: apk or aab", "apk")
+    .option("--output-dir <path>", "Output directory for build artifacts", "./dist")
+    .action(async (opts) => { await buildCommand(opts); });
+
+program.parse(process.argv);
