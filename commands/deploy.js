@@ -8,6 +8,7 @@ import ora from "ora";
 import { loadConfig } from "../utils/config.js";
 import { logger } from "../utils/logger.js";
 
+
 /**
  * High-level deploy command
  * opts:
@@ -176,18 +177,40 @@ function formatReleaseNotes(notesInput) {
 }
 
 async function findArtifact() {
-    // Look in ./dist for .aab or .apk (prefer aab if exists)
-    const dist = path.join(process.cwd(), "dist");
-    if (!(await fs.pathExists(dist))) return null;
+    const projectDir = process.cwd();
 
-    const files = await fs.readdir(dist);
-    const aabs = files.filter(f => f.endsWith(".aab"));
-    const apks = files.filter(f => f.endsWith(".apk"));
+    const candidatePaths = [
+        // Flutter
+        "build/app/outputs/bundle/release/app-release.aab",
+        "build/app/outputs/flutter-apk/app-release.apk",
 
-    if (aabs.length) return path.join(dist, aabs[0]);
-    if (apks.length) return path.join(dist, apks[0]);
+        // React Native
+        "android/app/build/outputs/bundle/release/app-release.aab",
+        "android/app/build/outputs/apk/release/app-release.apk",
+
+        // Generic dist fallback
+        "dist/app-release.aab",
+        "dist/app-release.apk",
+    ];
+
+    for (const rel of candidatePaths) {
+        const full = path.join(projectDir, rel);
+        if (await fs.pathExists(full)) return full;
+    }
+
+    // Check dist folder for any aab/apk if none of the above matched
+    const dist = path.join(projectDir, "dist");
+    if (await fs.pathExists(dist)) {
+        const files = await fs.readdir(dist);
+        const aab = files.find(f => f.endsWith(".aab"));
+        const apk = files.find(f => f.endsWith(".apk"));
+        if (aab) return path.join(dist, aab);
+        if (apk) return path.join(dist, apk);
+    }
+
     return null;
 }
+
 
 async function detectPackageName() {
     // Try android/app/src/main/AndroidManifest.xml
@@ -212,7 +235,7 @@ async function detectPackageName() {
     }
 
     // Try app/build.gradle for applicationId
-    const buildGradle = path.join(process.cwd(), "android", "app", "build.gradle");
+    const buildGradle = getBuildGradlePath();
     if (await fs.pathExists(buildGradle)) {
         const g = await fs.readFile(buildGradle, "utf8");
         const match = g.match(/applicationId\s+["']([^"']+)["']/);
@@ -222,4 +245,17 @@ async function detectPackageName() {
     // Try pubspec.yaml (for flutter projects with package name) — typical pubspec doesn't have package id, so skip
 
     return null;
+}
+
+function getBuildGradlePath() {
+    const gradleGroovy = path.join(process.cwd(), "android", "app", "build.gradle");
+    const gradleKts = path.join(process.cwd(), "android", "app", "build.gradle.kts");
+
+    if (fs.existsSync(gradleGroovy)) {
+        return gradleGroovy;
+    } else if (fs.existsSync(gradleKts)) {
+        return gradleKts;
+    } else {
+        throw new Error("No build.gradle or build.gradle.kts file found in android/app/");
+    }
 }
