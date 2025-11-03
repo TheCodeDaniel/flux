@@ -6,6 +6,10 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "bin": {
+    "flux": "./index.js"
+  },
+  "type": "module",
   "keywords": [
     "flux",
     "flux-cli",
@@ -15,11 +19,11 @@
   ],
   "author": "THECODEDANIEL",
   "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
     "chalk": "^5.6.2",
     "commander": "^14.0.2",
     "execa": "^9.6.0",
+    "fs-extra": "^11.3.2",
     "ora": "^9.0.0",
     "yaml": "^2.8.1"
   }
