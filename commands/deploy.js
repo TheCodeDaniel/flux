@@ -259,3 +259,31 @@ function getBuildGradlePath() {
         throw new Error("No build.gradle or build.gradle.kts file found in android/app/");
     }
 }
+
+// Will be used for log tracking
+function logDeployment({ versionCode, track, success, message }) {
+    try {
+        const logDir = path.join(process.cwd(), ".flux");
+        const logFile = path.join(logDir, "deployments.json");
+
+        if (!fs.existsSync(logDir)) fs.mkdirSync(logDir);
+
+        let logs = [];
+        if (fs.existsSync(logFile)) {
+            logs = JSON.parse(fs.readFileSync(logFile, "utf8"));
+        }
+
+        logs.push({
+            versionCode,
+            track,
+            success,
+            message,
+            timestamp: new Date().toISOString(),
+        });
+
+        fs.writeFileSync(logFile, JSON.stringify(logs, null, 2));
+        console.log(`📝 Deployment logged at .flux/deployments.json`);
+    } catch (error) {
+        console.error("⚠️ Failed to log deployment:", error.message);
+    }
+}
