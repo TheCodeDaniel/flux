@@ -150,10 +150,23 @@ export async function deployCommand(opts = {}) {
         logger.info(`Track: ${track}`);
         logger.info(`Package: ${packageName}`);
         logger.info(`Artifact: ${artifactPath}`);
+        // Log successful deployment
+        logDeployment({
+            versionCode: versionCodes.join(", "),
+            track,
+            success: true,
+            message: `Successfully deployed version ${versionCodes.join(", ")} to ${track}`,
+        });
     } catch (err) {
         spinner.fail(chalk.red("Deploy failed: " + (err.message || err)));
         // helpful error detail if available
         if (err.errors) console.error(err.errors);
+        logDeployment({
+            versionCode: "unknown",
+            track: opts.track || "internal",
+            success: false,
+            message: err.message || "Unknown error during deployment",
+        });
         process.exit(1);
     }
 }
