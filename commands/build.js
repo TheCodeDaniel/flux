@@ -6,6 +6,10 @@ import { performance } from "perf_hooks";
 import { loadConfig, getFramework } from "../utils/config.js";
 import { logger } from "../utils/logger.js";
 
+/**
+ * Handles building for Flutter and React Native projects.
+ * Supports flavors, dart-define, env-files, and multiple build modes.
+ */
 export async function buildCommand(opts = { releaseType: "apk", outputDir: "./dist" }) {
     const config = loadConfig();
     const framework = getFramework(config);
@@ -37,27 +41,63 @@ export async function buildCommand(opts = { releaseType: "apk", outputDir: "./di
 
 async function buildFlutter(opts, outDir) {
     const type = opts.releaseType === "aab" ? "appbundle" : "apk";
-    const buildCmd = `flutter build ${type} --release`;
+    const mode = opts.mode || "release";
+    const flavor = opts.flavor ? `--flavor ${opts.flavor}` : "";
+    const envFile = opts.envFile ? `--dart-define-from-file=${opts.envFile}` : "";
+
+    // handle multiple --define values
+    const defines = Array.isArray(opts.define)
+        ? opts.define.map(d => `--dart-define=${d}`).join(" ")
+        : opts.define
+            ? `--dart-define=${opts.define}`
+            : "";
+
+    const verbose = opts.verbose ? "--verbose" : "";
+
+    const buildCmd = `flutter build ${type} --${mode} ${flavor} ${envFile} ${defines} ${verbose}`.trim();
     logger.info(`🛠  Running: ${chalk.yellow(buildCmd)}`);
     execSync(buildCmd, { stdio: "inherit" });
 
+    // ✅ Determine output folder correctly based on releaseType, not build type
     const builtDir =
-        type === "aab"
+        opts.releaseType === "aab"
             ? "./build/app/outputs/bundle/release"
             : "./build/app/outputs/flutter-apk";
 
-    const files = fs.readdirSync(builtDir).filter(f => f.endsWith(`.${opts.releaseType}`));
-    if (files.length === 0) throw new Error(`No .${opts.releaseType} files found in ${builtDir}`);
+    // ✅ Fallback check (for custom or future Flutter build structures)
+    let finalDir = builtDir;
+    if (!fs.existsSync(finalDir)) {
+        const altDirs = [
+            "./build/app/outputs/bundle",
+            "./build/app/outputs/flutter-apk/release",
+            "./build/app/outputs/flutter-apk/debug",
+        ];
+        const foundAlt = altDirs.find(dir => fs.existsSync(dir));
+        if (foundAlt) {
+            logger.warn(`⚠️  Using fallback directory: ${foundAlt}`);
+            finalDir = foundAlt;
+        } else {
+            throw new Error(`❌ Expected output directory not found: ${builtDir}`);
+        }
+    }
 
-    const sourceFile = path.join(builtDir, files[0]);
+    const ext = opts.releaseType;
+    const files = fs.readdirSync(finalDir).filter(f => f.endsWith(`.${ext}`));
+
+    if (files.length === 0) {
+        throw new Error(`❌ No .${ext} files found in ${finalDir}`);
+    }
+
+    const sourceFile = path.join(finalDir, files[0]);
     const destFile = path.join(outDir, files[0]);
     await fs.copy(sourceFile, destFile);
-    logger.success(`Flutter ${opts.releaseType} copied to dist folder.`);
+
+    logger.success(`✅ Flutter ${ext.toUpperCase()} copied to ${outDir}`);
 }
 
+
 async function buildReactNative(opts, outDir) {
-    const task =
-        opts.releaseType === "aab" ? "bundleRelease" : "assembleRelease";
+    const task = opts.releaseType === "aab" ? "bundleRelease" : "assembleRelease";
     const gradleCmd =
         process.platform === "win32"
             ? `cd android && gradlew.bat ${task}`
@@ -78,5 +118,6 @@ async function buildReactNative(opts, outDir) {
     const sourceFile = path.join(builtDir, files[0]);
     const destFile = path.join(outDir, files[0]);
     await fs.copy(sourceFile, destFile);
-    logger.success(`React Native ${ext} copied to dist folder.`);
+
+    logger.success(`✅ React Native ${ext.toUpperCase()} copied to ${outDir}`);
 }
