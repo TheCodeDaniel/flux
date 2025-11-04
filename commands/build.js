@@ -58,42 +58,45 @@ async function buildFlutter(opts, outDir) {
     logger.info(`🛠  Running: ${chalk.yellow(buildCmd)}`);
     execSync(buildCmd, { stdio: "inherit" });
 
-    // ✅ Determine output folder correctly based on releaseType, not build type
-    const builtDir =
-        opts.releaseType === "aab"
-            ? "./build/app/outputs/bundle/release"
-            : "./build/app/outputs/flutter-apk";
-
-    // ✅ Fallback check (for custom or future Flutter build structures)
-    let finalDir = builtDir;
-    if (!fs.existsSync(finalDir)) {
-        const altDirs = [
-            "./build/app/outputs/bundle",
-            "./build/app/outputs/flutter-apk/release",
-            "./build/app/outputs/flutter-apk/debug",
-        ];
-        const foundAlt = altDirs.find(dir => fs.existsSync(dir));
-        if (foundAlt) {
-            logger.warn(`⚠️  Using fallback directory: ${foundAlt}`);
-            finalDir = foundAlt;
+    // Determine output folder
+    let builtDir;
+    if (opts.releaseType === "aab") {
+        const baseDir = "./build/app/outputs/bundle";
+        if (opts.flavor) {
+            builtDir = path.join(baseDir, `${opts.flavor}${capitalize(mode)}`);
         } else {
-            throw new Error(`❌ Expected output directory not found: ${builtDir}`);
+            builtDir = path.join(baseDir, mode);
+        }
+        if (!fs.existsSync(builtDir)) {
+            builtDir = baseDir; // fallback
+            logger.warn(`⚠️  Using fallback directory: ${builtDir}`);
+        }
+    } else {
+        // APK always goes to flutter-apk folder
+        builtDir = "./build/app/outputs/flutter-apk";
+        if (!fs.existsSync(builtDir)) {
+            throw new Error(`Expected APK output directory not found: ${builtDir}`);
         }
     }
 
-    const ext = opts.releaseType;
-    const files = fs.readdirSync(finalDir).filter(f => f.endsWith(`.${ext}`));
+    // Find first file ending with .aab or .apk
+    const files = fs.readdirSync(builtDir).filter(f => f.endsWith(`.${opts.releaseType}`));
+    if (files.length === 0) throw new Error(`No .${opts.releaseType} files found in ${builtDir}`);
 
-    if (files.length === 0) {
-        throw new Error(`❌ No .${ext} files found in ${finalDir}`);
-    }
-
-    const sourceFile = path.join(finalDir, files[0]);
+    // Copy to dist
+    const sourceFile = path.join(builtDir, files[0]);
     const destFile = path.join(outDir, files[0]);
     await fs.copy(sourceFile, destFile);
 
-    logger.success(`✅ Flutter ${ext.toUpperCase()} copied to ${outDir}`);
+    logger.success(`✅ Flutter ${opts.releaseType.toUpperCase()} copied to ${outDir}`);
 }
+
+// helper
+function capitalize(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+
 
 
 async function buildReactNative(opts, outDir) {

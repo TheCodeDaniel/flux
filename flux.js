@@ -49,7 +49,22 @@ program
     .description("Build Flutter or React Native project (APK or AAB)")
     .option("--release-type <type>", "Build type: apk or aab", "apk")
     .option("--output-dir <path>", "Output directory for build artifacts", "./dist")
-    .action(async (opts) => { await buildCommand(opts); });
+    .option("--flavor <name>", "Flutter flavor name")
+    .option("--mode <mode>", "Build mode: release, debug, profile", "release")
+    .option("--env-file <path>", "Path to .env file for --dart-define-from-file")
+    .option("--define <value...>", "Extra --dart-define values")
+    .option("--verbose", "Enable verbose Flutter build", false)
+    .action(async (opts) => {
+        await buildCommand({
+            releaseType: opts.releaseType,
+            outputDir: opts.outputDir,
+            flavor: opts.flavor,
+            mode: opts.mode,
+            envFile: opts.envFile,
+            define: opts.define,
+            verbose: opts.verbose,
+        });
+    });
 
 
 program
