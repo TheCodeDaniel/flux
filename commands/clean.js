@@ -10,8 +10,8 @@ export function cleanCommand() {
 
     const dirsToRemove =
         framework === "flutter"
-            ? ["./build", "./android/app/build", "./ios/build"]
-            : ["./android/app/build", "./ios/build", "./node_modules/.cache", "./build"];
+            ? ["./build", "./android/app/build", "./ios/build", "./dist"]
+            : ["./android/app/build", "./ios/build", "./node_modules/.cache", "./build", "./dist"];
 
     dirsToRemove.forEach((dir) => {
         if (fs.existsSync(dir)) {
