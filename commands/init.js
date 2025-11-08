@@ -136,6 +136,35 @@ async function registerAssetInPubspec(projectDir, assetRelativePath) {
 }
 
 /**
+ * Ensure .gitignore includes flux.yml and dist/
+ */
+async function updateGitignore(projectDir) {
+    const gitignorePath = path.join(projectDir, '.gitignore');
+
+    // Ensure file exists
+    if (!(await fs.pathExists(gitignorePath))) {
+        await fs.outputFile(gitignorePath, ''); // create empty file
+        console.log(chalk.yellow('.gitignore not found — created a new one.'));
+    }
+
+    const content = await fs.readFile(gitignorePath, 'utf8');
+    const lines = content.split('\n').map(line => line.trim());
+    const entriesToAdd = ['flux.yml', 'dist/'];
+
+    const newEntries = entriesToAdd.filter(entry => !lines.includes(entry));
+
+    if (newEntries.length > 0) {
+        const updatedContent = content.trimEnd() + '\n' + newEntries.join('\n') + '\n';
+        await fs.writeFile(gitignorePath, updatedContent, 'utf8');
+        console.log(chalk.green(`✅ Updated .gitignore`));
+        newEntries.forEach(e => console.log(chalk.yellow(`→ Added ${e}`)));
+    } else {
+        console.log(chalk.gray('.gitignore already includes required entries — no changes made.'));
+    }
+}
+
+
+/**
  * Public entry point for init
  */
 export async function initCommand(projectDir = process.cwd(), opts = { force: false }) {
@@ -160,6 +189,9 @@ export async function initCommand(projectDir = process.cwd(), opts = { force: fa
         } else {
             console.log(chalk.yellow('Unknown project type — flux.yml created, but no further project changes made.'));
         }
+
+        // 🆕 Add required entries to .gitignore
+        await updateGitignore(projectDir);
 
         console.log(chalk.green('Initialization complete 🎉'));
     } catch (err) {
