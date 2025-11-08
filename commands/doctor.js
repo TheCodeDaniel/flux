@@ -1,4 +1,5 @@
 import { execSync } from "child_process";
+import { existsSync } from "fs";
 import { logger } from "../utils/logger.js";
 import { loadConfig, getFramework } from "../utils/config.js";
 
@@ -15,6 +16,15 @@ function checkCommand(cmd, label = cmd) {
     }
 }
 
+function checkGradle() {
+    if (existsSync("./gradlew") || existsSync("./android/gradlew")) {
+        logger.success("Gradle wrapper detected (./gradlew)");
+        return true;
+    }
+    // Fallback to global gradle
+    return checkCommand("gradle", "Gradle");
+}
+
 export function doctorCommand() {
     logger.info("🩺 Running environment checks...");
     const config = loadConfig();
@@ -26,11 +36,11 @@ export function doctorCommand() {
     let frameworkChecks = [];
 
     if (framework === "flutter") {
-        frameworkChecks = [checkCommand("flutter"), checkCommand("gradle")];
+        frameworkChecks = [checkCommand("flutter"), checkGradle()];
     } else if (framework === "react-native") {
         frameworkChecks = [
             checkCommand("npx", "React Native CLI (via npx)"),
-            checkCommand("gradle"),
+            checkGradle()
         ];
     } else {
         logger.warn("Unknown framework — skipping framework-specific checks.");
