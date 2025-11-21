@@ -101,10 +101,11 @@ function capitalize(str) {
 
 async function buildReactNative(opts, outDir) {
     const task = opts.releaseType === "aab" ? "bundleRelease" : "assembleRelease";
+    const verboseFlag = opts.verbose ? "--info" : "";
     const gradleCmd =
         process.platform === "win32"
-            ? `cd android && gradlew.bat ${task}`
-            : `cd android && ./gradlew ${task}`;
+            ? `cd android && gradlew.bat ${task} ${verboseFlag}`.trim()
+            : `cd android && ./gradlew ${task} ${verboseFlag}`.trim();
 
     logger.info(`🛠  Running: ${chalk.yellow(gradleCmd)}`);
     execSync(gradleCmd, { stdio: "inherit" });

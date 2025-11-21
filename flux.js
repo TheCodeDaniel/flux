@@ -54,7 +54,7 @@ program
     .option("--mode <mode>", "Build mode: release, debug, profile", "release")
     .option("--env-file <path>", "Path to .env file for --dart-define-from-file")
     .option("--define <value...>", "Extra --dart-define values")
-    .option("--verbose", "Enable verbose Flutter build", false)
+    .option("--verbose", "Enable verbose build output", false)
     .action(async (opts) => {
         // Validate release type
         const validTypes = ['apk', 'aab'];
@@ -63,11 +63,18 @@ program
             process.exit(1);
         }
 
+        // Validate mode
+        const validModes = ['release', 'debug', 'profile'];
+        if (!validModes.includes(opts.mode.toLowerCase())) {
+            logger.error(`Invalid build mode: "${opts.mode}". Only "release", "debug", and "profile" are supported.`);
+            process.exit(1);
+        }
+
         await buildCommand({
             releaseType: opts.releaseType.toLowerCase(),
             outputDir: opts.outputDir,
             flavor: opts.flavor,
-            mode: opts.mode,
+            mode: opts.mode.toLowerCase(),
             envFile: opts.envFile,
             define: opts.define,
             verbose: opts.verbose,
