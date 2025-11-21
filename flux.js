@@ -6,6 +6,7 @@ import { infoCommand } from "./commands/info.js";
 import { initCommand } from "./commands/init.js";
 import { buildCommand } from "./commands/build.js";
 import { deployCommand } from "./commands/deploy.js";
+import { logger } from "./utils/logger.js";
 
 
 const program = new Command();
@@ -47,7 +48,7 @@ program
 program
     .command("build")
     .description("Build Flutter or React Native project (APK or AAB)")
-    .option("--release-type <type>", "Build type: apk or aab", "apk")
+    .requiredOption("--release-type <type>", "Build type: apk or aab (required)")
     .option("--output-dir <path>", "Output directory for build artifacts", "./dist")
     .option("--flavor <name>", "Flutter flavor name")
     .option("--mode <mode>", "Build mode: release, debug, profile", "release")
@@ -55,8 +56,15 @@ program
     .option("--define <value...>", "Extra --dart-define values")
     .option("--verbose", "Enable verbose Flutter build", false)
     .action(async (opts) => {
+        // Validate release type
+        const validTypes = ['apk', 'aab'];
+        if (!validTypes.includes(opts.releaseType.toLowerCase())) {
+            logger.error(`Invalid release type: "${opts.releaseType}". Only "apk" and "aab" are supported.`);
+            process.exit(1);
+        }
+
         await buildCommand({
-            releaseType: opts.releaseType,
+            releaseType: opts.releaseType.toLowerCase(),
             outputDir: opts.outputDir,
             flavor: opts.flavor,
             mode: opts.mode,
