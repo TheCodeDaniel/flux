@@ -124,10 +124,21 @@ async function buildFlutterIOS(opts, outDir) {
     logger.info(`🛠  Running: ${chalk.yellow(buildCmd)}`);
     execSync(buildCmd, { stdio: "inherit" });
 
-    // Flutter outputs IPA to build/ios/ipa/
-    const builtDir = "./build/ios/ipa";
+    // Determine output folder (flavor-aware like Android)
+    const baseDir = "./build/ios/ipa";
+    let builtDir;
+
+    if (opts.flavor) {
+        // With flavor: build/ios/ipa/{flavor}-{mode}
+        builtDir = path.join(baseDir, `${opts.flavor}-${mode}`);
+    } else {
+        // Without flavor: build/ios/ipa/
+        builtDir = baseDir;
+    }
+
     if (!fs.existsSync(builtDir)) {
-        throw new Error(`Expected IPA output directory not found: ${builtDir}`);
+        builtDir = baseDir; // fallback to base directory
+        logger.warn(`⚠️  Using fallback directory: ${builtDir}`);
     }
 
     // Find .ipa file
