@@ -25,6 +25,41 @@ function checkGradle() {
     return checkCommand("gradle", "Gradle");
 }
 
+function checkXcodeTools() {
+    try {
+        execSync("xcode-select -p", { stdio: "pipe" });
+        logger.success("Xcode Command Line Tools detected");
+        return true;
+    } catch {
+        logger.error("Xcode Command Line Tools not found");
+        logger.info("Install with: xcode-select --install");
+        return false;
+    }
+}
+
+function checkITMSTransporter() {
+    try {
+        execSync("xcrun iTMSTransporter -h", { stdio: "pipe" });
+        logger.success("iTMSTransporter detected (for iOS deployment)");
+        return true;
+    } catch {
+        logger.error("iTMSTransporter not found");
+        logger.info("Install Xcode Command Line Tools: xcode-select --install");
+        return false;
+    }
+}
+
+function checkAltool() {
+    try {
+        execSync("xcrun altool -h", { stdio: "pipe" });
+        logger.success("altool detected (legacy iOS upload tool)");
+        return true;
+    } catch {
+        logger.warn("altool not found (optional - altool is deprecated)");
+        return true; // Non-critical since altool is deprecated
+    }
+}
+
 export function doctorCommand() {
     logger.info("🩺 Running environment checks...");
     const config = loadConfig();
@@ -46,10 +81,23 @@ export function doctorCommand() {
         logger.warn("Unknown framework — skipping framework-specific checks.");
     }
 
-    const allGood = [...baseChecks, ...frameworkChecks].every(Boolean);
-    if (allGood) {
-        logger.success("All systems operational ✅");
+    // iOS-specific checks (only on macOS)
+    let iosChecks = [];
+    if (process.platform === 'darwin') {
+        logger.info("\n📱 Checking iOS tools (macOS detected)...");
+        iosChecks = [
+            checkXcodeTools(),
+            checkITMSTransporter(),
+            checkAltool()
+        ];
     } else {
-        logger.warn("Some tools are missing. Please install the required dependencies.");
+        logger.info("\n📱 Skipping iOS checks (macOS required)");
+    }
+
+    const allGood = [...baseChecks, ...frameworkChecks, ...iosChecks].every(Boolean);
+    if (allGood) {
+        logger.success("\n✅ All systems operational");
+    } else {
+        logger.warn("\n⚠️  Some tools are missing. Please install the required dependencies.");
     }
 }
