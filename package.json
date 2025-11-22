@@ -1,7 +1,7 @@
 {
   "name": "flux-cli",
-  "version": "0.0.1",
-  "description": "",
+  "version": "0.1.0-beta.1",
+  "description": "Local-first CI/CD CLI tool for mobile developers. Build and deploy Flutter & React Native apps to Google Play Store and Apple App Store from your local machine.",
   "main": "flux.js",
   "scripts": {
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
@@ -17,12 +17,35 @@
   "keywords": [
     "flux",
     "flux-cli",
-    "flux_cli",
     "ci",
-    "deployment"
+    "cd",
+    "cicd",
+    "deployment",
+    "mobile",
+    "flutter",
+    "react-native",
+    "ios",
+    "android",
+    "app-store",
+    "play-store",
+    "testflight",
+    "local-ci",
+    "build-automation",
+    "deploy-automation"
   ],
   "author": "THECODEDANIEL",
-  "license": "ISC",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TheCodeDaniel/flux-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/TheCodeDaniel/flux-cli/issues"
+  },
+  "homepage": "https://github.com/TheCodeDaniel/flux-cli#readme",
+  "engines": {
+    "node": ">=14.0.0"
+  },
   "dependencies": {
     "chalk": "^5.6.2",
     "commander": "^14.0.2",
