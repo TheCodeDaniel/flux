@@ -7,6 +7,17 @@ import ora from "ora";
 import readline from "readline";
 import { loadConfig } from "../utils/config.js";
 import { logger } from "../utils/logger.js";
+import {
+    generateToken,
+    getAppId,
+    getLatestBuild,
+    submitToTestFlight,
+    getOrCreateAppStoreVersion,
+    assignBuildToVersion,
+    submitForReview,
+    setReleaseNotes
+} from "../utils/appstore-api.js";
+import { extractIPAMetadata, formatReleaseNotes } from "../utils/ipa-parser.js";
 
 
 /**
@@ -19,6 +30,7 @@ import { logger } from "../utils/logger.js";
  *  - apiKeyId: override API Key ID
  *  - issuerId: override Issuer ID
  *  - uploadTool: transporter|altool (optional: will prompt if not provided)
+ *  - submitForReview: boolean (auto-submit for review after upload)
  */
 export async function deployIOSCommand(opts = {}) {
     const spinner = ora().start();
@@ -142,25 +154,143 @@ export async function deployIOSCommand(opts = {}) {
             throw err;
         }
 
-        // Note: Unlike Google Play API, Apple doesn't provide programmatic release management
-        // for TestFlight/App Store via CLI. You must use App Store Connect web UI or Fastlane.
-
-        if (track.toLowerCase() === 'testflight') {
-            logger.info(chalk.cyan("\n📱 Next steps for TestFlight:"));
-            logger.info("1. Go to App Store Connect (https://appstoreconnect.apple.com)");
-            logger.info("2. Navigate to your app → TestFlight");
-            logger.info("3. The uploaded build will appear in 'Builds' after processing");
-            logger.info("4. Add the build to a TestFlight group and submit for review if needed");
-        } else {
-            logger.info(chalk.cyan("\n🚀 Next steps for Production:"));
-            logger.info("1. Go to App Store Connect (https://appstoreconnect.apple.com)");
-            logger.info("2. Navigate to your app → App Store");
-            logger.info("3. Create a new version or update existing one");
-            logger.info("4. Select the uploaded build and submit for App Review");
+        // Generate API token for App Store Connect API
+        spinner.start("Generating App Store Connect API token...");
+        let token;
+        try {
+            token = generateToken(apiKeyId, issuerId, absKeyPath);
+            spinner.succeed(chalk.green("API token generated."));
+        } catch (err) {
+            spinner.fail(chalk.red("Failed to generate API token."));
+            logger.error(err.message);
+            throw err;
         }
 
-        logger.success("\n✅ Upload finished successfully.");
-        logger.info(`Track: ${track}`);
+        // Get App ID
+        spinner.start(`Looking up app with bundle ID: ${bundleId}...`);
+        let appId;
+        try {
+            appId = await getAppId(token, bundleId);
+            spinner.succeed(chalk.green(`App found: ${appId}`));
+        } catch (err) {
+            spinner.fail(chalk.red("Failed to find app."));
+            logger.error(err.message);
+            logger.info("Make sure the app exists in App Store Connect with the correct bundle ID.");
+            throw err;
+        }
+
+        // Get the latest build (the one we just uploaded)
+        spinner.start("Finding uploaded build...");
+        let buildId;
+        try {
+            buildId = await getLatestBuild(token, appId);
+            spinner.succeed(chalk.green(`Build found: ${buildId}`));
+        } catch (err) {
+            spinner.fail(chalk.red("Failed to find build."));
+            logger.error(err.message);
+            throw err;
+        }
+
+        // Submit based on track
+        if (track.toLowerCase() === 'testflight') {
+            // Submit to TestFlight
+            spinner.start("Submitting build to TestFlight...");
+            try {
+                await submitToTestFlight(token, buildId);
+                spinner.succeed(chalk.green("Build submitted to TestFlight!"));
+
+                logger.success("\n✅ TestFlight deployment complete!");
+                logger.info(chalk.cyan("\n📱 Next steps:"));
+                logger.info("1. Go to App Store Connect (https://appstoreconnect.apple.com)");
+                logger.info("2. Navigate to your app → TestFlight");
+                logger.info("3. The build will appear in TestFlight after Beta App Review");
+                logger.info("4. Add the build to your test groups as needed");
+            } catch (err) {
+                spinner.fail(chalk.red("Failed to submit to TestFlight."));
+                logger.error(err.message);
+                logger.info("\nThe build was uploaded successfully but automatic submission failed.");
+                logger.info("You can submit it manually in App Store Connect → TestFlight.");
+                // Don't throw - upload was successful
+            }
+        } else {
+            // Production - Full automation!
+            spinner.start("Extracting version info from IPA...");
+            let ipaMetadata;
+            try {
+                ipaMetadata = await extractIPAMetadata(artifactPath);
+                spinner.succeed(chalk.green("Version info extracted"));
+            } catch (err) {
+                spinner.fail(chalk.red("Failed to extract IPA metadata"));
+                logger.error(err.message);
+                logger.info("\nThe build was uploaded but automatic production submission failed.");
+                logger.info("Complete the submission manually in App Store Connect.");
+                return; // Don't throw - upload was successful
+            }
+
+            // Create or get App Store version
+            spinner.start(`Creating App Store version ${ipaMetadata.versionString}...`);
+            let versionInfo;
+            try {
+                versionInfo = await getOrCreateAppStoreVersion(token, appId, ipaMetadata.versionString);
+                spinner.succeed(chalk.green(`App Store version ready: ${ipaMetadata.versionString}`));
+            } catch (err) {
+                spinner.fail(chalk.red("Failed to create/get App Store version"));
+                logger.error(err.message);
+                throw err;
+            }
+
+            // Assign build to version
+            spinner.start("Assigning build to App Store version...");
+            try {
+                await assignBuildToVersion(token, versionInfo.versionId, buildId);
+                spinner.succeed(chalk.green("Build assigned to version"));
+            } catch (err) {
+                spinner.fail(chalk.red("Failed to assign build"));
+                logger.error(err.message);
+                throw err;
+            }
+
+            // Set release notes if provided
+            if (opts.notes) {
+                spinner.start("Setting release notes...");
+                try {
+                    const formattedNotes = formatReleaseNotes(opts.notes);
+                    await setReleaseNotes(token, versionInfo.versionId, formattedNotes);
+                    spinner.succeed(chalk.green("Release notes updated"));
+                } catch (err) {
+                    spinner.warn(chalk.yellow("Failed to set release notes (non-critical)"));
+                    logger.warn(err.message);
+                }
+            }
+
+            // Submit for App Store review
+            spinner.start("Submitting for App Store review...");
+            try {
+                await submitForReview(token, versionInfo.versionId);
+                spinner.succeed(chalk.green("Submitted for App Store review!"));
+
+                logger.success("\n✅ Production deployment complete!");
+                logger.info(chalk.cyan("\n🚀 What happens next:"));
+                logger.info("1. Your app is now in App Review queue");
+                logger.info("2. Apple will review your app (usually 24-48 hours)");
+                logger.info("3. You'll receive email notifications about review status");
+                logger.info("4. If approved, your app will go live automatically");
+                logger.info("\n💡 Tip: Monitor review status in App Store Connect");
+            } catch (err) {
+                spinner.fail(chalk.red("Failed to submit for review"));
+                logger.error(err.message);
+                logger.info("\nThe build and version are ready, but submission failed.");
+                logger.info(chalk.cyan("\n📱 Manual steps needed:"));
+                logger.info("1. Go to App Store Connect (https://appstoreconnect.apple.com)");
+                logger.info("2. Navigate to your app → App Store");
+                logger.info(`3. Version ${ipaMetadata.versionString} is ready`);
+                logger.info("4. Complete any missing required fields");
+                logger.info("5. Click 'Submit for Review'");
+                // Don't throw - most work is done
+            }
+        }
+
+        logger.info(`\nTrack: ${track}`);
         logger.info(`Bundle ID: ${bundleId}`);
         logger.info(`Artifact: ${artifactPath}`);
 
@@ -169,7 +299,7 @@ export async function deployIOSCommand(opts = {}) {
             bundleId,
             track,
             success: true,
-            message: `Successfully uploaded IPA to App Store Connect (${track})`,
+            message: `Successfully deployed to App Store Connect (${track})${track === 'testflight' ? ' - submitted for TestFlight review' : ''}`,
         });
 
     } catch (err) {

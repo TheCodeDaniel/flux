@@ -124,7 +124,7 @@ program
     .description("Upload IPA to App Store Connect (TestFlight or Production)")
     .option("--artifact <path>", "Path to .ipa file (default: auto-detect from ./dist)")
     .option("--track <name>", "App Store track (testflight|production)", "testflight")
-    .option("--notes <text>", "Release notes (for manual entry in App Store Connect)")
+    .option("--notes <text>", "Release notes / What's New (string or JSON object for multiple locales)")
     .option("--api-key-path <path>", "Override path to .p8 API key file")
     .option("--api-key-id <id>", "Override API Key ID")
     .option("--issuer-id <id>", "Override Issuer ID")
@@ -166,7 +166,7 @@ program
         await deployIOSCommand({
             artifact: opts.artifact,
             track: opts.track.toLowerCase(),
-            notes: opts.notes,
+            notes: parseNotesOption(opts.notes), // Use same parser as Android
             apiKeyPath: opts.apiKeyPath,
             apiKeyId: opts.apiKeyId,
             issuerId: opts.issuerId,
