@@ -30,6 +30,7 @@
 ### 🚀 **Complete Mobile CI/CD Without the Complexity**
 
 Traditional CI/CD platforms like GitHub Actions, CircleCI, or Fastlane can be:
+
 - **Expensive** (pay per minute for build runners)
 - **Slow** (network latency, cold starts, queue times)
 - **Complex** (YAML config hell, debugging nightmares)
@@ -38,11 +39,13 @@ Traditional CI/CD platforms like GitHub Actions, CircleCI, or Fastlane can be:
 Flux solves these problems:
 
 ### ✅ **Local-First Development**
+
 - Run builds on **your own machine** for maximum speed and privacy
 - No upload/download overhead—your code never leaves your control
 - Use your powerful local hardware instead of slow cloud VMs
 
 ### ✅ **Production-Ready Automation**
+
 - **Full iOS automation**: Build IPA → Upload → Submit for App Store review (all from CLI!)
 - **Full Android automation**: Build APK/AAB → Upload → Deploy to any track
 - Automatic version extraction from artifacts
@@ -50,6 +53,7 @@ Flux solves these problems:
 - Comprehensive error handling
 
 ### ✅ **Developer Experience First**
+
 - Simple, intuitive CLI commands
 - Helpful diagnostics with `flux doctor`
 - Interactive prompts for choices
@@ -57,11 +61,13 @@ Flux solves these problems:
 - Detailed logging to `.flux/deployments.json`
 
 ### ✅ **Cost Effective**
+
 - **100% free**: No per-minute charges, no subscription fees
 - Use your existing hardware
 - Only pay for Apple Developer ($99/year) and Google Play ($25 one-time)
 
 ### ✅ **Transparent & Open Source**
+
 - MIT licensed—use it however you want
 - No vendor lock-in
 - Full control over your deployment pipeline
@@ -73,6 +79,7 @@ Flux solves these problems:
 **✅ Production Ready**
 
 ### Android
+
 - ✅ Build APK/AAB with flavors
 - ✅ Deploy to Google Play (internal/alpha/beta/production)
 - ✅ Automatic artifact detection
@@ -80,6 +87,7 @@ Flux solves these problems:
 - ✅ Dry-run mode
 
 ### iOS (macOS only)
+
 - ✅ Build IPA with flavors
 - ✅ Upload to App Store Connect
 - ✅ Automatic TestFlight submission
@@ -88,6 +96,7 @@ Flux solves these problems:
 - ✅ Multi-locale What's New support
 
 ### Developer Tools
+
 - ✅ Project initialization
 - ✅ Environment validation
 - ✅ Build artifact cleanup
@@ -95,6 +104,7 @@ Flux solves these problems:
 - ✅ Deployment audit logging
 
 ### Planned
+
 - React Native full iOS support
 - Screenshot upload
 - Metadata management
@@ -120,10 +130,12 @@ Flux solves these problems:
 ## Requirements
 
 ### Common
+
 - Node.js v14+ (v18+ recommended)
 - npm or yarn
 
 ### Android
+
 - Java (JDK 11 or 17)
 - Android SDK
 - Gradle
@@ -131,6 +143,7 @@ Flux solves these problems:
 - Google Play service account JSON
 
 ### iOS (macOS only)
+
 - macOS
 - Xcode & Xcode Command Line Tools
 - Flutter (for Flutter projects)
@@ -169,11 +182,13 @@ flux doctor
 ### Android (Google Play)
 
 1. **Initialize**:
+
 ```bash
 flux init
 ```
 
 2. **Configure** `flux.yml`:
+
 ```yaml
 playstore:
   service_account_json: ./keys/playstore.json
@@ -181,11 +196,13 @@ playstore:
 ```
 
 3. **Build**:
+
 ```bash
 flux build --release-type aab
 ```
 
 4. **Deploy**:
+
 ```bash
 flux deploy-android --track internal --notes "First release!"
 ```
@@ -195,11 +212,13 @@ flux deploy-android --track internal --notes "First release!"
 **Requires macOS**
 
 1. **Initialize**:
+
 ```bash
 flux init
 ```
 
 2. **Configure** `flux.yml`:
+
 ```yaml
 appstore:
   api_key_path: ./keys/AuthKey_XXXXXXXXXX.p8
@@ -209,21 +228,25 @@ appstore:
 ```
 
 3. **Build**:
+
 ```bash
 flux build --release-type ipa
 ```
 
 4. **Deploy to TestFlight**:
+
 ```bash
 flux deploy-ios --track testflight
 ```
 
 5. **Deploy to Production** (full automation!):
+
 ```bash
 flux deploy-ios --track production --notes "Bug fixes"
 ```
 
 This automatically:
+
 - ✅ Uploads IPA
 - ✅ Extracts version
 - ✅ Creates App Store version
@@ -289,6 +312,7 @@ flux build --release-type <apk|aab|ipa> [options]
 ```
 
 **Options:**
+
 - `--release-type <type>` — Build type (required): `apk`, `aab`, or `ipa`
 - `--output-dir <path>` — Output directory (default: `./dist`)
 - `--flavor <name>` — Build flavor/scheme
@@ -321,6 +345,7 @@ flux deploy-android [options]
 ```
 
 **Options:**
+
 - `--artifact <path>` — Path to `.apk` or `.aab` (auto-detected)
 - `--track <name>` — Track: `internal`, `alpha`, `beta`, `production` (default: `internal`)
 - `--notes <text>` — Release notes (string or JSON)
@@ -353,6 +378,7 @@ flux deploy-ios [options]
 ```
 
 **Options:**
+
 - `--artifact <path>` — Path to `.ipa` (auto-detected)
 - `--track <name>` — Track: `testflight` or `production` (default: `testflight`)
 - `--notes <text>` — Release notes (string or JSON)
@@ -378,6 +404,7 @@ flux deploy-ios --upload-tool altool
 ```
 
 **Production Track:**
+
 - Uploads IPA
 - Extracts version from IPA automatically
 - Creates/finds App Store version
@@ -554,6 +581,7 @@ npm run test:unit
 ## Roadmap
 
 ### ✅ Completed
+
 - Flutter Android/iOS builds
 - Google Play deployment
 - App Store Connect deployment
@@ -562,6 +590,7 @@ npm run test:unit
 - Multi-locale release notes
 
 ### 📋 Planned
+
 - React Native iOS support
 - Screenshot upload
 - Metadata management
@@ -587,4 +616,4 @@ MIT License © 2025 Flux CLI Project
 
 **Built with ❤️ by developers, for developers.**
 
-*Stop paying for slow CI/CD. Take control of your mobile deployments with Flux.*
+_Stop paying for slow CI/CD. Take control of your mobile deployments with Flux._
