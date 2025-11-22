@@ -1,4 +1,4 @@
-// commands/deploy.js
+// commands/deploy-android.js
 import fs from "fs-extra";
 import path from "path";
 import chalk from "chalk";
@@ -10,15 +10,15 @@ import { logger } from "../utils/logger.js";
 
 
 /**
- * High-level deploy command
+ * Deploy APK/AAB to Google Play Store
  * opts:
- *  - artifact: path to .apk or .aab (optional; will try ./dist)
+ *  - artifact: path to .apk or .aab (required)
  *  - track: internal|alpha|beta|production
  *  - notes: release notes string
  *  - key: override path to service account json
  *  - dryRun: boolean (if true, won't commit edit)
  */
-export async function deployCommand(opts = {}) {
+export async function deployAndroidCommand(opts = {}) {
     const spinner = ora().start();
     try {
         const config = loadConfig();
@@ -35,14 +35,18 @@ export async function deployCommand(opts = {}) {
             process.exit(1);
         }
 
-        // Determine artifact
-        const artifactPath = opts.artifact ? path.resolve(process.cwd(), opts.artifact) : await findArtifact();
+        // Determine artifact (auto-detect if not provided)
+        const artifactPath = opts.artifact
+            ? path.resolve(process.cwd(), opts.artifact)
+            : await findArtifact();
+
         if (!artifactPath) {
-            spinner.fail(chalk.red("No artifact found to upload. Build first with `flux build`."));
+            spinner.fail(chalk.red("No APK or AAB found. Specify --artifact or run `flux build` first."));
             process.exit(1);
         }
+
         if (!(await fs.pathExists(artifactPath))) {
-            spinner.fail(chalk.red(`Artifact not found at ${artifactPath}`));
+            spinner.fail(chalk.red(`Artifact not found: ${artifactPath}`));
             process.exit(1);
         }
 
@@ -231,7 +235,6 @@ async function findArtifact() {
 
     return null;
 }
-
 
 async function detectPackageName() {
     // Try android/app/src/main/AndroidManifest.xml

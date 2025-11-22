@@ -5,7 +5,7 @@ import { cleanCommand } from "./commands/clean.js";
 import { infoCommand } from "./commands/info.js";
 import { initCommand } from "./commands/init.js";
 import { buildCommand } from "./commands/build.js";
-import { deployCommand } from "./commands/deploy.js";
+import { deployAndroidCommand } from "./commands/deploy-android.js";
 import { logger } from "./utils/logger.js";
 
 
@@ -83,15 +83,26 @@ program
 
 
 program
-    .command("deploy")
-    .description("Upload APK/AAB to Google Play")
-    .option("--artifact <path>", "Path to .apk or .aab (default: ./dist/*)")
-    .option("--track <name>", "Play track to release to (internal|alpha|beta|production)", "internal")
+    .command("deploy-android")
+    .description("Upload APK/AAB to Google Play Store")
+    .option("--artifact <path>", "Path to .apk or .aab file (default: auto-detect from ./dist)")
+    .option("--track <name>", "Google Play track (internal|alpha|beta|production)", "internal")
     .option("--notes <text>", "Release notes (string or JSON object)")
-    .option("--key <path>", "Override path to service account JSON")
+    .option("--key <path>", "Override path to Google Play service account JSON")
     .option("--dry-run", "Validate without committing", false)
     .action(async (opts) => {
-        await deployCommand({
+        // Validate artifact extension if provided
+        if (opts.artifact) {
+            const validExtensions = ['.apk', '.aab'];
+            const artifactExt = opts.artifact.toLowerCase().slice(opts.artifact.lastIndexOf('.'));
+
+            if (!validExtensions.includes(artifactExt)) {
+                logger.error(`Invalid artifact for Android: "${opts.artifact}". Must be .apk or .aab file.`);
+                process.exit(1);
+            }
+        }
+
+        await deployAndroidCommand({
             artifact: opts.artifact,
             track: opts.track,
             notes: parseNotesOption(opts.notes),
