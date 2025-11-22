@@ -22,6 +22,14 @@ const DEFAULT_FLUX_YML = (framework) => ({
         package_name: "", // e.g. com.yourapp.packagename
         default_track: "internal", // internal | alpha | beta | production
     },
+    appstore: {
+        api_key_path: './keys/AuthKey_XXXXXXXXXX.p8', // App Store Connect API Key (.p8 file)
+        api_key_id: '', // e.g. XXXXXXXXXX (10 chars)
+        issuer_id: '', // e.g. xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx (UUID format)
+        bundle_id: '', // e.g. com.yourapp.bundleid
+        default_track: 'testflight', // testflight | production
+        upload_tool: 'transporter', // transporter | altool (transporter is recommended)
+    },
     versioning: {
         strategy: 'auto' // options: auto, manual
     }

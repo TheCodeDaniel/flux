@@ -6,6 +6,7 @@ import { infoCommand } from "./commands/info.js";
 import { initCommand } from "./commands/init.js";
 import { buildCommand } from "./commands/build.js";
 import { deployAndroidCommand } from "./commands/deploy-android.js";
+import { deployIOSCommand } from "./commands/deploy-ios.js";
 import { logger } from "./utils/logger.js";
 
 
@@ -115,6 +116,61 @@ program
             notes: parseNotesOption(opts.notes),
             key: opts.key,
             dryRun: opts.dryRun,
+        });
+    });
+
+program
+    .command("deploy-ios")
+    .description("Upload IPA to App Store Connect (TestFlight or Production)")
+    .option("--artifact <path>", "Path to .ipa file (default: auto-detect from ./dist)")
+    .option("--track <name>", "App Store track (testflight|production)", "testflight")
+    .option("--notes <text>", "Release notes (for manual entry in App Store Connect)")
+    .option("--api-key-path <path>", "Override path to .p8 API key file")
+    .option("--api-key-id <id>", "Override API Key ID")
+    .option("--issuer-id <id>", "Override Issuer ID")
+    .option("--upload-tool <tool>", "Upload tool to use (transporter|altool)")
+    .action(async (opts) => {
+        // Check macOS requirement
+        if (process.platform !== 'darwin') {
+            logger.error('Deploying to iOS requires macOS.');
+            logger.info(`Current platform: ${process.platform}`);
+            process.exit(1);
+        }
+
+        // Validate artifact extension if provided
+        if (opts.artifact) {
+            const artifactExt = opts.artifact.toLowerCase().slice(opts.artifact.lastIndexOf('.'));
+
+            if (artifactExt !== '.ipa') {
+                logger.error(`Invalid artifact for iOS: "${opts.artifact}". Must be .ipa file.`);
+                process.exit(1);
+            }
+        }
+
+        // Validate track
+        const validTracks = ['testflight', 'production'];
+        if (!validTracks.includes(opts.track.toLowerCase())) {
+            logger.error(`Invalid track: "${opts.track}". Only "testflight" and "production" are supported.`);
+            process.exit(1);
+        }
+
+        // Validate upload tool if provided
+        if (opts.uploadTool) {
+            const validTools = ['transporter', 'altool'];
+            if (!validTools.includes(opts.uploadTool.toLowerCase())) {
+                logger.error(`Invalid upload tool: "${opts.uploadTool}". Only "transporter" and "altool" are supported.`);
+                process.exit(1);
+            }
+        }
+
+        await deployIOSCommand({
+            artifact: opts.artifact,
+            track: opts.track.toLowerCase(),
+            notes: opts.notes,
+            apiKeyPath: opts.apiKeyPath,
+            apiKeyId: opts.apiKeyId,
+            issuerId: opts.issuerId,
+            uploadTool: opts.uploadTool?.toLowerCase(),
         });
     });
 
