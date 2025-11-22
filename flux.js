@@ -13,14 +13,14 @@ import { logger } from "./utils/logger.js";
 const program = new Command();
 
 program
-    .name('flux')
-    .description('Local CI/CD CLI for mobile apps 📱🚀')
-    .version('0.0.1');
+    .name('fluxm')
+    .description('Flux Mobile CLI - Local CI/CD for mobile apps 📱🚀')
+    .version('0.1.0-beta.1');
 
 program
     .command('init')
-    .description('Create flux.yml and (for Flutter) register it in pubspec.yaml')
-    .option('-f, --force', 'overwrite existing flux.yml (backups will be created)', false)
+    .description('Create flux-mobile.yml and (for Flutter) register it in pubspec.yaml')
+    .option('-f, --force', 'overwrite existing flux-mobile.yml (backups will be created)', false)
     .action(async (opts) => {
         try {
             await initCommand(process.cwd(), { force: !!opts.force });

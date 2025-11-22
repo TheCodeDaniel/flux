@@ -54,19 +54,19 @@ export async function deployIOSCommand(opts = {}) {
 
         // Validate required credentials
         if (!apiKeyPath) {
-            spinner.fail(chalk.red("Missing App Store Connect API key path in flux.yml (appstore.api_key_path)."));
+            spinner.fail(chalk.red("Missing App Store Connect API key path in flux-mobile.yml (appstore.api_key_path)."));
             process.exit(1);
         }
         if (!apiKeyId) {
-            spinner.fail(chalk.red("Missing API Key ID in flux.yml (appstore.api_key_id)."));
+            spinner.fail(chalk.red("Missing API Key ID in flux-mobile.yml (appstore.api_key_id)."));
             process.exit(1);
         }
         if (!issuerId) {
-            spinner.fail(chalk.red("Missing Issuer ID in flux.yml (appstore.issuer_id)."));
+            spinner.fail(chalk.red("Missing Issuer ID in flux-mobile.yml (appstore.issuer_id)."));
             process.exit(1);
         }
         if (!bundleId) {
-            spinner.fail(chalk.red("Missing Bundle ID in flux.yml (appstore.bundle_id)."));
+            spinner.fail(chalk.red("Missing Bundle ID in flux-mobile.yml (appstore.bundle_id)."));
             process.exit(1);
         }
 
@@ -397,7 +397,7 @@ async function findArtifact() {
 // Will be used for log tracking
 function logDeployment({ bundleId, track, success, message }) {
     try {
-        const logDir = path.join(process.cwd(), ".flux");
+        const logDir = path.join(process.cwd(), ".flux-mobile");
         const logFile = path.join(logDir, "deployments.json");
 
         if (!fs.existsSync(logDir)) fs.mkdirSync(logDir);
@@ -417,7 +417,7 @@ function logDeployment({ bundleId, track, success, message }) {
         });
 
         fs.writeFileSync(logFile, JSON.stringify(logs, null, 2));
-        logger.info(`📝 Deployment logged at .flux/deployments.json`);
+        logger.info(`📝 Deployment logged at .flux-mobile/deployments.json`);
     } catch (error) {
         logger.warn("⚠️  Failed to log deployment: " + error.message);
     }

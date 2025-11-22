@@ -21,7 +21,7 @@ readme.md.backup
 # Build artifacts
 dist/
 build/
-.flux/
+.flux-mobile/
 
 # Environment files
 .env

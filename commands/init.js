@@ -81,17 +81,17 @@ async function detectProjectType(projectDir) {
 }
 
 /**
- * Ensure flux.yml exists; if exist and !force -> throw
+ * Ensure flux-mobile.yml exists; if exist and !force -> throw
  */
 async function createFluxYml(projectDir, framework, opts = { force: false }) {
-    const fluxPath = path.join(projectDir, 'flux.yml');
+    const fluxPath = path.join(projectDir, 'flux-mobile.yml');
     const exists = await fs.pathExists(fluxPath);
     if (exists && !opts.force) {
-        throw new Error('flux.yml already exists. Use --force to overwrite.');
+        throw new Error('flux-mobile.yml already exists. Use --force to overwrite.');
     }
 
     if (exists && opts.force) {
-        const backup = path.join(projectDir, `flux.yml.bak.${timestamp()}`);
+        const backup = path.join(projectDir, `flux-mobile.yml.bak.${timestamp()}`);
         await fs.copyFile(fluxPath, backup);
     }
 
@@ -100,7 +100,7 @@ async function createFluxYml(projectDir, framework, opts = { force: false }) {
 }
 
 /**
- * Safely update pubspec.yaml to include flux.yml in flutter.assets.
+ * Safely update pubspec.yaml to include flux-mobile.yml in flutter.assets.
  */
 async function registerAssetInPubspec(projectDir, assetRelativePath) {
     const pubspecPath = path.join(projectDir, 'pubspec.yaml');
@@ -144,7 +144,7 @@ async function registerAssetInPubspec(projectDir, assetRelativePath) {
 }
 
 /**
- * Ensure .gitignore includes flux.yml and dist/
+ * Ensure .gitignore includes flux-mobile.yml and dist/
  */
 async function updateGitignore(projectDir) {
     const gitignorePath = path.join(projectDir, '.gitignore');
@@ -157,7 +157,7 @@ async function updateGitignore(projectDir) {
 
     const content = await fs.readFile(gitignorePath, 'utf8');
     const lines = content.split('\n').map(line => line.trim());
-    const entriesToAdd = ['flux.yml', 'dist/'];
+    const entriesToAdd = ['flux-mobile.yml', 'dist/'];
 
     const newEntries = entriesToAdd.filter(entry => !lines.includes(entry));
 
@@ -184,18 +184,18 @@ export async function initCommand(projectDir = process.cwd(), opts = { force: fa
         console.log(chalk.green(`Created ${path.relative(process.cwd(), createdFlux)}`));
 
         if (framework === 'flutter') {
-            const { updated, backupPath } = await registerAssetInPubspec(projectDir, './flux.yml');
+            const { updated, backupPath } = await registerAssetInPubspec(projectDir, './flux-mobile.yml');
             if (updated) {
-                console.log(chalk.green(`Registered flux.yml in pubspec.yaml (backup saved to ${path.basename(backupPath)})`));
+                console.log(chalk.green(`Registered flux-mobile.yml in pubspec.yaml (backup saved to ${path.basename(backupPath)})`));
                 console.log(chalk.yellow('Note: run `flutter pub get` if you plan to load the asset at runtime.'));
             } else {
-                console.log(chalk.gray('flux.yml already registered in pubspec.yaml — no change.'));
+                console.log(chalk.gray('flux-mobile.yml already registered in pubspec.yaml — no change.'));
             }
         } else if (framework === 'react-native' || framework === 'expo') {
             console.log(chalk.yellow(`${framework} project detected — no automatic asset registration needed.`));
-            console.log(chalk.yellow('If you want to bundle flux.yml, configure Metro or copy file into your app assets.'));
+            console.log(chalk.yellow('If you want to bundle flux-mobile.yml, configure Metro or copy file into your app assets.'));
         } else {
-            console.log(chalk.yellow('Unknown project type — flux.yml created, but no further project changes made.'));
+            console.log(chalk.yellow('Unknown project type — flux-mobile.yml created, but no further project changes made.'));
         }
 
         // 🆕 Add required entries to .gitignore

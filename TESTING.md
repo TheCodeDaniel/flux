@@ -82,7 +82,7 @@ open coverage/index.html
 - ✅ Throw error when key file doesn't exist
 
 ### 4. Init Command Tests (2/4 passing) ⚠️
-- ✅ Create flux.yml in current directory
+- ✅ Create flux-mobile.yml in current directory
 - ✅ Prevent overwriting without --force flag
 - ⚠️ Flutter pubspec.yaml integration (YAML API issue)
 - ⚠️ Backup file creation (minor implementation detail)

@@ -1,6 +1,6 @@
-# Publishing Flux CLI to npm
+# Publishing Flux Mobile CLI to npm
 
-This guide walks you through publishing Flux CLI to npm as a beta release.
+This guide walks you through publishing Flux Mobile CLI to npm as a beta release.
 
 ---
 
@@ -57,23 +57,23 @@ This shows all files that will be published. Verify that:
 # Create a tarball
 npm pack
 
-# This creates flux-cli-0.1.0-beta.1.tgz
+# This creates flux-mobile-cli-0.1.0-beta.1.tgz
 # Install it globally to test
-npm install -g ./flux-cli-0.1.0-beta.1.tgz
+npm install -g ./flux-mobile-cli-0.1.0-beta.1.tgz
 
 # Test it works
-flux --version
-flux doctor
+fluxm --version
+fluxm doctor
 
 # Clean up
-npm uninstall -g flux-cli
-rm flux-cli-0.1.0-beta.1.tgz
+npm uninstall -g flux-mobile-cli
+rm flux-mobile-cli-0.1.0-beta.1.tgz
 ```
 
 ### ✅ 5. Check Package Name Availability
 ```bash
-# Verify the name "flux-cli" is available (or already yours)
-npm view flux-cli
+# Verify the name "flux-mobile-cli" is available (or already yours)
+npm view flux-mobile-cli
 ```
 
 If it shows "404 Not Found" - the name is available! ✅
@@ -98,7 +98,7 @@ npm publish --tag beta --access public
 
 ```bash
 # Check the package on npm
-npm view flux-cli
+npm view flux-mobile-cli
 
 # Should show:
 # - version: 0.1.0-beta.1
@@ -109,14 +109,14 @@ npm view flux-cli
 
 ```bash
 # Install the beta version globally
-npm install -g flux-cli@beta
+npm install -g flux-mobile-cli@beta
 
 # Verify it works
-flux --version  # Should show 0.1.0-beta.1
-flux doctor
+fluxm --version  # Should show 0.1.0-beta.1
+fluxm doctor
 
 # Try a command
-flux init
+fluxm init
 ```
 
 ---
@@ -137,7 +137,7 @@ flux init
 2. **Update README Badge** (optional)
    Add npm version badge to README:
    ```markdown
-   [![npm version](https://badge.fury.io/js/flux-cli.svg)](https://www.npmjs.com/package/flux-cli)
+   [![npm version](https://badge.fury.io/js/flux-mobile-cli.svg)](https://www.npmjs.com/package/flux-mobile-cli)
    ```
 
 3. **Social Media / Community**
@@ -152,13 +152,13 @@ Users can install the beta with:
 
 ```bash
 # Install latest beta version
-npm install -g flux-cli@beta
+npm install -g flux-mobile-cli@beta
 
 # Or install specific beta version
-npm install -g flux-cli@0.1.0-beta.1
+npm install -g flux-mobile-cli@0.1.0-beta.1
 ```
 
-**Note:** Running `npm install -g flux-cli` (without `@beta`) won't install your package yet because you haven't published a stable `latest` version.
+**Note:** Running `npm install -g flux-mobile-cli` (without `@beta`) won't install your package yet because you haven't published a stable `latest` version.
 
 ---
 
@@ -207,7 +207,7 @@ npm publish --access public
 
 This will tag it as `latest` and users can install with:
 ```bash
-npm install -g flux-cli
+npm install -g flux-mobile-cli
 ```
 
 ---
@@ -218,10 +218,10 @@ If you need to unpublish within 72 hours:
 
 ```bash
 # Unpublish specific version
-npm unpublish flux-cli@0.1.0-beta.1
+npm unpublish flux-mobile-cli@0.1.0-beta.1
 
 # Unpublish entire package (use with extreme caution!)
-npm unpublish flux-cli --force
+npm unpublish flux-mobile-cli --force
 ```
 
 ⚠️ **Warning:** Unpublishing can break projects depending on your package. Only do this for serious issues (security, accidentally published secrets, etc.)
@@ -232,7 +232,7 @@ npm unpublish flux-cli --force
 
 ### "Package name too similar to existing package"
 - Change the name in `package.json` to something unique
-- Try: `@yourusername/flux-cli` (scoped package)
+- Try: `@yourusername/flux-mobile-cli` (scoped package)
 
 ### "You must verify your email"
 - Check your npm account email
@@ -268,7 +268,7 @@ Before publishing, verify:
 - [npm Documentation](https://docs.npmjs.com/cli/v8/commands/npm-publish)
 - [Semantic Versioning](https://semver.org/)
 - [npm Beta Releases](https://docs.npmjs.com/cli/v8/commands/npm-dist-tag)
-- [Your Package Page](https://www.npmjs.com/package/flux-cli) (after publishing)
+- [Your Package Page](https://www.npmjs.com/package/flux-mobile-cli) (after publishing)
 
 ---
 

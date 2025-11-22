@@ -1,6 +1,6 @@
 # Flux CLI 📱🚀
 
-> ⚠️ **BETA RELEASE** - This package is currently in beta (v0.1.0-beta.1). While the core features are stable and production-ready, expect active development and potential breaking changes before v1.0.0. Please report any issues on [GitHub](https://github.com/TheCodeDaniel/flux-cli/issues).
+> ⚠️ **BETA RELEASE** - This package is currently in beta (v0.1.0-beta.1). While the core features are stable and production-ready, expect active development and potential breaking changes before v1.0.0. Please report any issues on [GitHub](https://github.com/TheCodeDaniel/flux-mobile-cli/issues).
 
 **Flux** is a powerful, open-source local CI/CD CLI tool for mobile developers. Build, test, and deploy your Flutter and React Native apps to Google Play Store and Apple App Store—all from your local machine. No mandatory cloud CI, no vendor lock-in, just simple commands that work.
 
@@ -57,7 +57,7 @@ Flux solves these problems:
 ### ✅ **Developer Experience First**
 
 - Simple, intuitive CLI commands
-- Helpful diagnostics with `flux doctor`
+- Helpful diagnostics with `fluxm doctor`
 - Interactive prompts for choices
 - Color-coded output with progress spinners
 - Detailed logging to `.flux/deployments.json`
@@ -116,9 +116,9 @@ Flux solves these problems:
 
 ## Features
 
-- Initialize project config with `flux init`
-- Validate environment with `flux doctor`
-- Clean build artifacts with `flux clean`
+- Initialize project config with `fluxm init`
+- Validate environment with `fluxm doctor`
+- Clean build artifacts with `fluxm clean`
 - Build Android (APK/AAB) and iOS (IPA) apps
 - Deploy to Google Play (all tracks)
 - Deploy to App Store Connect (TestFlight or Production)
@@ -158,8 +158,8 @@ Flux solves these problems:
 ### Development
 
 ```bash
-git clone https://github.com/yourusername/flux-cli
-cd flux-cli
+git clone https://github.com/TheCodeDaniel/flux-mobile-cli
+cd flux-mobile-cli
 npm install
 npm link
 ```
@@ -167,15 +167,22 @@ npm link
 ### Production (when published)
 
 ```bash
-npm install -g flux-cli
+npm install -g flux-mobile-cli@beta
 ```
 
 ### Verify
 
 ```bash
-flux --version
-flux doctor
+fluxm --version
+fluxm doctor
 ```
+
+> **Note:** After installation, you can use either `fluxm` (short form) or `flux-mobile` (descriptive form). Both commands work identically:
+> ```bash
+> fluxm build --release-type aab
+> # OR
+> flux-mobile build --release-type aab
+> ```
 
 ---
 
@@ -186,10 +193,10 @@ flux doctor
 1. **Initialize**:
 
 ```bash
-flux init
+fluxm init
 ```
 
-2. **Configure** `flux.yml`:
+2. **Configure** `flux-mobile.yml`:
 
 ```yaml
 playstore:
@@ -200,13 +207,13 @@ playstore:
 3. **Build**:
 
 ```bash
-flux build --release-type aab
+fluxm build --release-type aab
 ```
 
 4. **Deploy**:
 
 ```bash
-flux deploy-android --track internal --notes "First release!"
+fluxm deploy-android --track internal --notes "First release!"
 ```
 
 ### iOS (App Store Connect)
@@ -216,10 +223,10 @@ flux deploy-android --track internal --notes "First release!"
 1. **Initialize**:
 
 ```bash
-flux init
+fluxm init
 ```
 
-2. **Configure** `flux.yml`:
+2. **Configure** `flux-mobile.yml`:
 
 ```yaml
 appstore:
@@ -232,19 +239,19 @@ appstore:
 3. **Build**:
 
 ```bash
-flux build --release-type ipa
+fluxm build --release-type ipa
 ```
 
 4. **Deploy to TestFlight**:
 
 ```bash
-flux deploy-ios --track testflight
+fluxm deploy-ios --track testflight
 ```
 
 5. **Deploy to Production** (full automation!):
 
 ```bash
-flux deploy-ios --track production --notes "Bug fixes"
+fluxm deploy-ios --track production --notes "Bug fixes"
 ```
 
 This automatically:
@@ -259,58 +266,58 @@ This automatically:
 
 ## Commands
 
-### `flux init`
+### `fluxm init`
 
 Initialize project configuration.
 
 ```bash
-flux init [-f|--force]
+fluxm init [-f|--force]
 ```
 
-Creates `flux.yml` and updates project files.
+Creates `flux-mobile.yml` and updates project files.
 
 ---
 
-### `flux doctor`
+### `fluxm doctor`
 
 Validate development environment.
 
 ```bash
-flux doctor
+fluxm doctor
 ```
 
 Checks Node.js, Flutter, Xcode, Android SDK, etc.
 
 ---
 
-### `flux clean`
+### `fluxm clean`
 
 Remove build artifacts.
 
 ```bash
-flux clean
+fluxm clean
 ```
 
 Cleans `build/`, `dist/`, and framework-specific caches.
 
 ---
 
-### `flux info`
+### `fluxm info`
 
 Display project and system information.
 
 ```bash
-flux info
+fluxm info
 ```
 
 ---
 
-### `flux build`
+### `fluxm build`
 
 Build mobile application.
 
 ```bash
-flux build --release-type <apk|aab|ipa> [options]
+fluxm build --release-type <apk|aab|ipa> [options]
 ```
 
 **Options:**
@@ -327,23 +334,23 @@ flux build --release-type <apk|aab|ipa> [options]
 
 ```bash
 # Build production AAB
-flux build --release-type aab
+fluxm build --release-type aab
 
 # Build with flavor
-flux build --release-type apk --flavor dev --mode debug
+fluxm build --release-type apk --flavor dev --mode debug
 
 # Build with environment variables
-flux build --release-type ipa --env-file .env.prod
+fluxm build --release-type ipa --env-file .env.prod
 ```
 
 ---
 
-### `flux deploy-android`
+### `fluxm deploy-android`
 
 Deploy to Google Play Store.
 
 ```bash
-flux deploy-android [options]
+fluxm deploy-android [options]
 ```
 
 **Options:**
@@ -358,25 +365,25 @@ flux deploy-android [options]
 
 ```bash
 # Deploy to internal
-flux deploy-android --track internal
+fluxm deploy-android --track internal
 
 # Production with notes
-flux deploy-android --track production --notes "Major update"
+fluxm deploy-android --track production --notes "Major update"
 
 # Multi-language notes
-flux deploy-android --notes '{"en-US":"English","es-ES":"Español"}'
+fluxm deploy-android --notes '{"en-US":"English","es-ES":"Español"}'
 ```
 
 ---
 
-### `flux deploy-ios`
+### `fluxm deploy-ios`
 
 Deploy to App Store Connect.
 
 **Requires macOS**
 
 ```bash
-flux deploy-ios [options]
+fluxm deploy-ios [options]
 ```
 
 **Options:**
@@ -393,16 +400,16 @@ flux deploy-ios [options]
 
 ```bash
 # Deploy to TestFlight
-flux deploy-ios --track testflight
+fluxm deploy-ios --track testflight
 
 # Production with auto-submission
-flux deploy-ios --track production --notes "Bug fixes"
+fluxm deploy-ios --track production --notes "Bug fixes"
 
 # Multi-locale notes
-flux deploy-ios --notes '{"en-US":"English","fr-FR":"Français"}'
+fluxm deploy-ios --notes '{"en-US":"English","fr-FR":"Français"}'
 
 # Use altool
-flux deploy-ios --upload-tool altool
+fluxm deploy-ios --upload-tool altool
 ```
 
 **Production Track:**
@@ -418,7 +425,7 @@ flux deploy-ios --upload-tool altool
 
 ## Configuration Reference
 
-### flux.yml
+### flux-mobile.yml
 
 ```yaml
 app_name: MyApp
@@ -462,7 +469,7 @@ build:
 3. Download JSON key
 4. Grant access in Play Console
 5. Assign Release Manager role
-6. Configure `flux.yml`
+6. Configure `flux-mobile.yml`
 
 [Detailed guide](https://cloud.google.com/iam/docs/service-accounts)
 
@@ -472,7 +479,7 @@ build:
 2. Download `.p8` file
 3. Note Key ID and Issuer ID
 4. Save securely
-5. Configure `flux.yml`
+5. Configure `flux-mobile.yml`
 6. Install Xcode Command Line Tools
 
 [Detailed guide](https://developer.apple.com/documentation/appstoreconnectapi/creating_api_keys_for_app_store_connect_api)
@@ -532,7 +539,7 @@ chmod 600 keys/*.json
 ### General
 
 **Q: Check environment?**
-A: Run `flux doctor`
+A: Run `fluxm doctor`
 
 **Q: Where are build artifacts?**
 A: Default: `./dist`
@@ -543,7 +550,7 @@ A: Default: `./dist`
 A: Verify service account has Play Console access and API is enabled
 
 **Q: Artifact not found?**
-A: Run `flux build --release-type aab` first
+A: Run `fluxm build --release-type aab` first
 
 ### iOS
 
@@ -564,8 +571,8 @@ A: **Yes!** Use `--track production`
 ## Development & Contributing
 
 ```bash
-git clone https://github.com/yourusername/flux-cli
-cd flux-cli
+git clone https://github.com/TheCodeDaniel/flux-mobile-cli
+cd flux-mobile-cli
 npm install
 npm link
 npm run test:unit
@@ -612,7 +619,7 @@ MIT License © 2025 Flux CLI Project
 
 - 📖 [Documentation](README.md)
 - 🧪 [Testing Guide](TESTING.md)
-- 🐛 [Issues](https://github.com/yourusername/flux-cli/issues)
+- 🐛 [Issues](https://github.com/TheCodeDaniel/flux-mobile-cli/issues)
 
 ---
 

@@ -55,16 +55,16 @@ npm run test:unit
 npm pack
 
 # Install globally for testing
-npm install -g ./flux-cli-0.1.0-beta.1.tgz
+npm install -g ./flux-mobile-cli-0.1.0-beta.1.tgz
 
 # Test basic commands
-flux --version
-flux doctor
-cd /tmp && flux init
+fluxm --version
+fluxm doctor
+cd /tmp && fluxm init
 
 # Clean up
-npm uninstall -g flux-cli
-rm flux-cli-0.1.0-beta.1.tgz
+npm uninstall -g flux-mobile-cli
+rm flux-mobile-cli-0.1.0-beta.1.tgz
 ```
 
 ---
@@ -85,9 +85,9 @@ npm login
 
 ## ✅ Name Availability
 
-Check if "flux-cli" is available:
+Check if "flux-mobile-cli" is available:
 ```bash
-npm view flux-cli
+npm view flux-mobile-cli
 ```
 
 - If shows "404" → Name is available ✅
@@ -117,10 +117,10 @@ npm publish --tag beta --access public
 ```
 
 **What this does:**
-- Publishes `flux-cli@0.1.0-beta.1` to npm
+- Publishes `flux-mobile-cli@0.1.0-beta.1` to npm
 - Tags it as `beta` (not `latest`)
 - Makes it publicly accessible
-- Users install with: `npm install -g flux-cli@beta`
+- Users install with: `npm install -g flux-mobile-cli@beta`
 
 ---
 
@@ -128,7 +128,7 @@ npm publish --tag beta --access public
 
 1. **Verify on npm**
    ```bash
-   npm view flux-cli
+   npm view flux-mobile-cli
    ```
 
 2. **Create Git Tag**
@@ -138,15 +138,15 @@ npm publish --tag beta --access public
    ```
 
 3. **Create GitHub Release**
-   - Go to https://github.com/TheCodeDaniel/flux-cli/releases
+   - Go to https://github.com/TheCodeDaniel/flux-mobile-cli/releases
    - Create new release from tag `v0.1.0-beta.1`
    - Title: "v0.1.0-beta.1 - Initial Beta Release"
    - Description: Feature highlights and beta disclaimer
 
 4. **Test Installation**
    ```bash
-   npm install -g flux-cli@beta
-   flux --version
+   npm install -g flux-mobile-cli@beta
+   fluxm --version
    ```
 
 5. **Share the news!**
@@ -169,7 +169,7 @@ npm publish --tag beta --access public
 → Run `npm whoami` to verify you're logged in
 
 **"Name too similar to existing package"**
-→ Change name in package.json or use scoped package: `@yourusername/flux-cli`
+→ Change name in package.json or use scoped package: `@yourusername/flux-mobile-cli`
 
 ---
 
