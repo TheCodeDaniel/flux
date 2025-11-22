@@ -4,7 +4,11 @@
   "description": "",
   "main": "flux.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
+    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
+    "test:integration": "node --experimental-vm-modules node_modules/jest/bin/jest.js tests/integration",
+    "test:unit": "node --experimental-vm-modules node_modules/jest/bin/jest.js tests/utils tests/commands tests/validation"
   },
   "bin": {
     "flux": "./flux.js"
@@ -30,5 +34,9 @@
     "ora": "^9.0.0",
     "xml2js": "^0.6.2",
     "yaml": "^2.8.1"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "jest": "^30.2.0"
   }
 }
