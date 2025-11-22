@@ -21,10 +21,25 @@ export async function buildCommand(opts = { releaseType: "apk", outputDir: "./di
     await fs.ensureDir(outDir);
 
     try {
+        // Determine if iOS build
+        const isIOS = opts.releaseType === "ipa";
+
+        if (isIOS && process.platform !== 'darwin') {
+            throw new Error("iOS builds require macOS");
+        }
+
         if (framework === "flutter") {
-            await buildFlutter(opts, outDir);
+            if (isIOS) {
+                await buildFlutterIOS(opts, outDir);
+            } else {
+                await buildFlutter(opts, outDir);
+            }
         } else if (framework === "react-native") {
-            await buildReactNative(opts, outDir);
+            if (isIOS) {
+                throw new Error("React Native iOS builds are not yet supported. Use Xcode or react-native CLI.");
+            } else {
+                await buildReactNative(opts, outDir);
+            }
         } else {
             throw new Error("Unsupported framework. Only Flutter and React Native are supported.");
         }
@@ -89,6 +104,42 @@ async function buildFlutter(opts, outDir) {
     await fs.copy(sourceFile, destFile);
 
     logger.success(`✅ Flutter ${opts.releaseType.toUpperCase()} copied to ${outDir}`);
+}
+
+async function buildFlutterIOS(opts, outDir) {
+    const mode = opts.mode || "release";
+    const flavor = opts.flavor ? `--flavor ${opts.flavor}` : "";
+    const envFile = opts.envFile ? `--dart-define-from-file=${opts.envFile}` : "";
+
+    // handle multiple --define values
+    const defines = Array.isArray(opts.define)
+        ? opts.define.map(d => `--dart-define=${d}`).join(" ")
+        : opts.define
+            ? `--dart-define=${opts.define}`
+            : "";
+
+    const verbose = opts.verbose ? "--verbose" : "";
+
+    const buildCmd = `flutter build ipa --${mode} ${flavor} ${envFile} ${defines} ${verbose}`.trim();
+    logger.info(`🛠  Running: ${chalk.yellow(buildCmd)}`);
+    execSync(buildCmd, { stdio: "inherit" });
+
+    // Flutter outputs IPA to build/ios/ipa/
+    const builtDir = "./build/ios/ipa";
+    if (!fs.existsSync(builtDir)) {
+        throw new Error(`Expected IPA output directory not found: ${builtDir}`);
+    }
+
+    // Find .ipa file
+    const files = fs.readdirSync(builtDir).filter(f => f.endsWith('.ipa'));
+    if (files.length === 0) throw new Error(`No .ipa files found in ${builtDir}`);
+
+    // Copy to dist
+    const sourceFile = path.join(builtDir, files[0]);
+    const destFile = path.join(outDir, files[0]);
+    await fs.copy(sourceFile, destFile);
+
+    logger.success(`✅ Flutter IPA copied to ${outDir}`);
 }
 
 // helper

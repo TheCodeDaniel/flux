@@ -47,8 +47,8 @@ program
 
 program
     .command("build")
-    .description("Build Flutter or React Native project (APK or AAB)")
-    .requiredOption("--release-type <type>", "Build type: apk or aab (required)")
+    .description("Build Flutter or React Native project (APK, AAB, or IPA)")
+    .requiredOption("--release-type <type>", "Build type: apk, aab, or ipa (required)")
     .option("--output-dir <path>", "Output directory for build artifacts", "./dist")
     .option("--flavor <name>", "Flutter flavor name")
     .option("--mode <mode>", "Build mode: release, debug, profile", "release")
@@ -57,9 +57,16 @@ program
     .option("--verbose", "Enable verbose build output", false)
     .action(async (opts) => {
         // Validate release type
-        const validTypes = ['apk', 'aab'];
+        const validTypes = ['apk', 'aab', 'ipa'];
         if (!validTypes.includes(opts.releaseType.toLowerCase())) {
-            logger.error(`Invalid release type: "${opts.releaseType}". Only "apk" and "aab" are supported.`);
+            logger.error(`Invalid release type: "${opts.releaseType}". Only "apk", "aab", and "ipa" are supported.`);
+            process.exit(1);
+        }
+
+        // Check macOS requirement for iOS builds
+        if (opts.releaseType.toLowerCase() === 'ipa' && process.platform !== 'darwin') {
+            logger.error('Building IPA files requires macOS.');
+            logger.info(`Current platform: ${process.platform}`);
             process.exit(1);
         }
 
