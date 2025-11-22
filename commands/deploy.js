@@ -107,6 +107,14 @@ export async function deployCommand(opts = {}) {
 
         // Determine version code returned by upload
         const versionCodes = uploadResult.data.versionCode ? [String(uploadResult.data.versionCode)] : (uploadResult.data.versionCodes || []);
+
+        // Validate version codes exist
+        if (!versionCodes || versionCodes.length === 0) {
+            spinner.fail(chalk.red("Upload succeeded but no version code was returned by Google Play."));
+            logger.error("This may indicate an issue with the artifact or Google Play API response.");
+            process.exit(1);
+        }
+
         logger.info(`Uploaded artifact version codes: ${versionCodes.join(", ")}`);
 
         // Prepare release object
@@ -114,7 +122,7 @@ export async function deployCommand(opts = {}) {
         const notes = formatReleaseNotes(opts.notes || "Release via Flux CLI");
 
         const release = {
-            name: `Release ${new Date().toISOString()}`,
+            name: `${versionCodes[0]} (${track})`,
             status: "completed",
             versionCodes: versionCodes.map(Number),
             releaseNotes: notes,
