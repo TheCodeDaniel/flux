@@ -82,7 +82,7 @@ export async function deployIOSCommand(opts = {}) {
             : await findArtifact();
 
         if (!artifactPath) {
-            spinner.fail(chalk.red("No IPA found. Specify --artifact or run `flux build --release-type ipa` first."));
+            spinner.fail(chalk.red("No IPA found. Specify --artifact or run `fluxm build --release-type ipa` first."));
             process.exit(1);
         }
 

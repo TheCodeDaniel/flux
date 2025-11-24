@@ -169,9 +169,9 @@ If we ever want to change command names:
 ```json
 {
   "bin": {
-    "fluxm": "./flux.js",          // Primary
-    "flux-mobile": "./flux.js",    // Alias
-    "flux-m": "./flux.js"          // Future alias?
+    "fluxm": "./fluxm.js",          // Primary
+    "flux-mobile": "./fluxm.js",    // Alias
+    "flux-m": "./fluxm.js"          // Future alias?
   }
 }
 ```

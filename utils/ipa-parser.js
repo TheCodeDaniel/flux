@@ -9,7 +9,7 @@ import { logger } from "./logger.js";
  * Uses unzip and PlistBuddy (macOS built-in tools)
  */
 export async function extractIPAMetadata(ipaPath) {
-    const tmpDir = path.join(process.cwd(), ".flux", "tmp");
+    const tmpDir = path.join(process.cwd(), ".flux-mobile", "tmp");
     await fs.ensureDir(tmpDir);
 
     try {

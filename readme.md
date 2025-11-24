@@ -1,14 +1,14 @@
-# Flux CLI 📱🚀
+# Flux Mobile CLI 📱🚀
 
 > ⚠️ **BETA RELEASE** - This package is currently in beta (v0.1.0-beta.1). While the core features are stable and production-ready, expect active development and potential breaking changes before v1.0.0. Please report any issues on [GitHub](https://github.com/TheCodeDaniel/flux-mobile-cli/issues).
 
-**Flux** is a powerful, open-source local CI/CD CLI tool for mobile developers. Build, test, and deploy your Flutter and React Native apps to Google Play Store and Apple App Store—all from your local machine. No mandatory cloud CI, no vendor lock-in, just simple commands that work.
+**Flux Mobile CLI** is a powerful, open-source local CI/CD CLI tool for mobile developers. Build, test, and deploy your Flutter and React Native apps to Google Play Store and Apple App Store—all from your local machine. No mandatory cloud CI, no vendor lock-in, just simple commands that work.
 
 ---
 
 ## Table of Contents
 
-- [Why Use Flux?](#why-use-flux)
+- [Why Use Flux Mobile CLI?](#why-use-flux-mobile-cli)
 - [Current Status](#current-status)
 - [Features](#features)
 - [Requirements](#requirements)
@@ -27,7 +27,7 @@
 
 ---
 
-## Why Use Flux?
+## Why Use Flux Mobile CLI?
 
 ### 🚀 **Complete Mobile CI/CD Without the Complexity**
 
@@ -60,7 +60,7 @@ Flux solves these problems:
 - Helpful diagnostics with `fluxm doctor`
 - Interactive prompts for choices
 - Color-coded output with progress spinners
-- Detailed logging to `.flux/deployments.json`
+- Detailed logging to `.flux-mobile/deployments.json`
 
 ### ✅ **Cost Effective**
 
@@ -611,7 +611,7 @@ npm run test:unit
 
 ## License
 
-MIT License © 2025 Flux CLI Project
+MIT License © 2025 Flux Mobile CLI Project
 
 ---
 
@@ -625,4 +625,4 @@ MIT License © 2025 Flux CLI Project
 
 **Built with ❤️ by developers, for developers.**
 
-_Stop paying for slow CI/CD. Take control of your mobile deployments with Flux._
+_Stop paying for slow CI/CD. Take control of your mobile deployments with Flux Mobile CLI._

@@ -1,4 +1,4 @@
-# Pre-Publish Checklist for Flux CLI v0.1.0-beta.1
+# Pre-Publish Checklist for Flux Mobile CLI v0.1.0-beta.1
 
 Use this checklist before running `npm publish --tag beta --access public`
 
@@ -23,7 +23,7 @@ Run: `npm pack --dry-run`
 Verify the package includes (17 files total, ~96KB):
 - [x] All command files (`commands/*.js`)
 - [x] All utility files (`utils/*.js`)
-- [x] Main entry point (`flux.js`)
+- [x] Main entry point (`fluxm.js`)
 - [x] Documentation (`README.md`, `TESTING.md`, `PUBLISHING.md`)
 - [x] Package manifest (`package.json`)
 

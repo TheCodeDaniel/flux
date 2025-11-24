@@ -41,7 +41,7 @@ export async function deployAndroidCommand(opts = {}) {
             : await findArtifact();
 
         if (!artifactPath) {
-            spinner.fail(chalk.red("No APK or AAB found. Specify --artifact or run `flux build` first."));
+            spinner.fail(chalk.red("No APK or AAB found. Specify --artifact or run `fluxm build --release-type aab` first."));
             process.exit(1);
         }
 
