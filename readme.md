@@ -38,7 +38,7 @@ Traditional CI/CD platforms like GitHub Actions, CircleCI, or Fastlane can be:
 - **Complex** (YAML config hell, debugging nightmares)
 - **Privacy concerns** (uploading code to third-party servers)
 
-Flux solves these problems:
+Flux Mobile CLI solves these problems:
 
 ### ✅ **Local-First Development**
 
@@ -488,7 +488,7 @@ build:
 
 ## Testing
 
-Flux includes comprehensive tests.
+Flux Mobile CLI includes comprehensive tests.
 
 ```bash
 # Run unit tests

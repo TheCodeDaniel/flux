@@ -1,6 +1,6 @@
-# Flux CLI - Test Suite
+# Flux Mobile CLI - Test Suite
 
-This directory contains the test suite for the Flux CLI tool.
+This directory contains the test suite for the Flux Mobile CLI tool.
 
 ## Test Structure
 
