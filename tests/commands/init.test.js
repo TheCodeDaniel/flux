@@ -17,10 +17,10 @@ describe('Init Command', () => {
         await fs.remove(testDir);
     });
 
-    test('should create flux.yml in current directory', async () => {
+    test('should create flux-mobile.yml in current directory', async () => {
         await initCommand(testDir, { force: false });
 
-        const fluxYmlPath = path.join(testDir, 'flux.yml');
+        const fluxYmlPath = path.join(testDir, 'flux-mobile.yml');
         const exists = await fs.pathExists(fluxYmlPath);
 
         expect(exists).toBe(true);
@@ -45,25 +45,25 @@ dependencies:
 
         const updatedPubspec = await fs.readFile(path.join(testDir, 'pubspec.yaml'), 'utf8');
 
-        // Should contain flux.yml reference
+        // Should contain flux-mobile.yml reference
         expect(updatedPubspec).toContain('assets:');
-        expect(updatedPubspec).toContain('- flux.yml');
+        expect(updatedPubspec).toContain('- flux-mobile.yml');
     });
 
-    test('should create backup when force flag is used on existing flux.yml', async () => {
+    test('should create backup when force flag is used on existing flux-mobile.yml', async () => {
         const existingConfig = { test: 'config' };
-        await fs.writeFile(path.join(testDir, 'flux.yml'), JSON.stringify(existingConfig));
+        await fs.writeFile(path.join(testDir, 'flux-mobile.yml'), JSON.stringify(existingConfig));
 
         await initCommand(testDir, { force: true });
 
         // Should create backup file
-        const backupFiles = (await fs.readdir(testDir)).filter(f => f.startsWith('flux.yml.backup'));
+        const backupFiles = (await fs.readdir(testDir)).filter(f => f.startsWith('flux-mobile.yml.backup'));
         expect(backupFiles.length).toBeGreaterThan(0);
     });
 
-    test('should not overwrite existing flux.yml without force flag', async () => {
+    test('should not overwrite existing flux-mobile.yml without force flag', async () => {
         const existingConfig = { test: 'existing-config' };
-        await fs.writeFile(path.join(testDir, 'flux.yml'), JSON.stringify(existingConfig));
+        await fs.writeFile(path.join(testDir, 'flux-mobile.yml'), JSON.stringify(existingConfig));
 
         // Should throw or skip without force flag
         await expect(async () => {

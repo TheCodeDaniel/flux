@@ -7,7 +7,7 @@ export default {
         'utils/**/*.js',
         '!**/node_modules/**',
         '!**/dist/**',
-        '!**/.flux/**'
+        '!**/.flux-mobile/**'
     ],
     coverageDirectory: 'coverage',
     coverageReporters: ['text', 'lcov', 'html'],

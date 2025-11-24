@@ -25,7 +25,7 @@ export async function deployAndroidCommand(opts = {}) {
         const playCfg = config.playstore || {};
         const serviceAccountPath = opts.key || playCfg.service_account_json;
         if (!serviceAccountPath) {
-            spinner.fail(chalk.red("Missing Play Store service account path in flux.yml (playstore.service_account_json)."));
+            spinner.fail(chalk.red("Missing Play Store service account path in flux-mobile.yml (playstore.service_account_json)."));
             process.exit(1);
         }
 
@@ -53,7 +53,7 @@ export async function deployAndroidCommand(opts = {}) {
         // Determine package name
         const packageName = config.playstore?.package_name || config.android?.package_name || (await detectPackageName());
         if (!packageName) {
-            spinner.fail(chalk.red("Could not detect Android package name. Set playstore.package_name in flux.yml or ensure AndroidManifest exists."));
+            spinner.fail(chalk.red("Could not detect Android package name. Set playstore.package_name in flux-mobile.yml or ensure AndroidManifest exists."));
             process.exit(1);
         }
 
@@ -287,7 +287,7 @@ function getBuildGradlePath() {
 // Will be used for log tracking
 function logDeployment({ versionCode, track, success, message }) {
     try {
-        const logDir = path.join(process.cwd(), ".flux");
+        const logDir = path.join(process.cwd(), ".flux-mobile");
         const logFile = path.join(logDir, "deployments.json");
 
         if (!fs.existsSync(logDir)) fs.mkdirSync(logDir);
@@ -306,7 +306,7 @@ function logDeployment({ versionCode, track, success, message }) {
         });
 
         fs.writeFileSync(logFile, JSON.stringify(logs, null, 2));
-        console.log(`📝 Deployment logged at .flux/deployments.json`);
+        console.log(`📝 Deployment logged at .flux-mobile/deployments.json`);
     } catch (error) {
         console.error("⚠️ Failed to log deployment:", error.message);
     }

@@ -1,0 +1,48 @@
+# Files to exclude from npm package
+
+# Tests
+tests/
+jest.config.js
+*.test.js
+coverage/
+.test-*/
+
+# Development files
+.git/
+.gitignore
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Documentation (keep README.md, TESTING.md, LICENSE)
+readme.md.backup
+
+# Build artifacts
+dist/
+build/
+.flux-mobile/
+
+# Environment files
+.env
+.env.*
+
+# Keys and credentials (safety check)
+keys/
+*.p8
+*.json
+!package.json
+!package-lock.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Node modules (handled by npm automatically)
+node_modules/

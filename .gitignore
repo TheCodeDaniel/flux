@@ -6,7 +6,7 @@ dist/
 build/
 
 # Flux artifacts
-.flux/
+.flux-mobile/
 
 # Test artifacts
 coverage/

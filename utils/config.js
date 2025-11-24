@@ -3,9 +3,9 @@ import yaml from "js-yaml";
 import { logger } from "./logger.js";
 
 export function loadConfig() {
-    const configPath = "./flux.yml";
+    const configPath = "./flux-mobile.yml";
     if (!fs.existsSync(configPath)) {
-        logger.error("flux.yml not found. Please run `flux init` first.");
+        logger.error("flux-mobile.yml not found. Please run `flux init` first.");
         process.exit(1);
     }
 
@@ -14,7 +14,7 @@ export function loadConfig() {
         const config = yaml.load(file);
         return config;
     } catch (e) {
-        logger.error("Error parsing flux.yml: " + e.message);
+        logger.error("Error parsing flux-mobile.yml: " + e.message);
         process.exit(1);
     }
 }

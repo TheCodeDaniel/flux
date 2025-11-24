@@ -6,7 +6,7 @@ import { loadConfig } from '../../utils/config.js';
 
 describe('Config Utils', () => {
     const testDir = path.join(process.cwd(), '.test-workspace');
-    const fluxYmlPath = path.join(testDir, 'flux.yml');
+    const fluxYmlPath = path.join(testDir, 'flux-mobile.yml');
 
     beforeEach(async () => {
         await fs.ensureDir(testDir);
@@ -18,7 +18,7 @@ describe('Config Utils', () => {
         await fs.remove(testDir);
     });
 
-    test('should load valid flux.yml configuration', async () => {
+    test('should load valid flux-mobile.yml configuration', async () => {
         const mockConfig = {
             flutter: {
                 enabled: true,
@@ -37,11 +37,11 @@ describe('Config Utils', () => {
         expect(config).toEqual(mockConfig);
     });
 
-    test('should throw error when flux.yml is missing', () => {
+    test('should throw error when flux-mobile.yml is missing', () => {
         expect(() => loadConfig()).toThrow();
     });
 
-    test('should handle malformed flux.yml', async () => {
+    test('should handle malformed flux-mobile.yml', async () => {
         await fs.writeFile(fluxYmlPath, 'invalid yaml content {{{');
 
         expect(() => loadConfig()).toThrow();
