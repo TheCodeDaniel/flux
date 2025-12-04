@@ -4,7 +4,6 @@ import { doctorCommand } from "./commands/doctor.js";
 import { cleanCommand } from "./commands/clean.js";
 import { infoCommand } from "./commands/info.js";
 import { initCommand } from "./commands/init.js";
-import { buildCommand } from "./commands/build.js";
 import { releaseAndroidCommand } from "./commands/release-android.js";
 import { deployIOSCommand } from "./commands/deploy-ios.js";
 import { logger } from "./utils/logger.js";
@@ -46,48 +45,6 @@ program
     .action(infoCommand);
 
 
-program
-    .command("build")
-    .description("Build Flutter or React Native project (APK, AAB, or IPA)")
-    .requiredOption("--release-type <type>", "Build type: apk, aab, or ipa (required)")
-    .option("--output-dir <path>", "Output directory for build artifacts", "./dist")
-    .option("--flavor <name>", "Flutter flavor name")
-    .option("--mode <mode>", "Build mode: release, debug, profile", "release")
-    .option("--env-file <path>", "Path to .env file for --dart-define-from-file")
-    .option("--define <value...>", "Extra --dart-define values")
-    .option("--verbose", "Enable verbose build output", false)
-    .action(async (opts) => {
-        // Validate release type
-        const validTypes = ['apk', 'aab', 'ipa'];
-        if (!validTypes.includes(opts.releaseType.toLowerCase())) {
-            logger.error(`Invalid release type: "${opts.releaseType}". Only "apk", "aab", and "ipa" are supported.`);
-            process.exit(1);
-        }
-
-        // Check macOS requirement for iOS builds
-        if (opts.releaseType.toLowerCase() === 'ipa' && process.platform !== 'darwin') {
-            logger.error('Building IPA files requires macOS.');
-            logger.info(`Current platform: ${process.platform}`);
-            process.exit(1);
-        }
-
-        // Validate mode
-        const validModes = ['release', 'debug', 'profile'];
-        if (!validModes.includes(opts.mode.toLowerCase())) {
-            logger.error(`Invalid build mode: "${opts.mode}". Only "release", "debug", and "profile" are supported.`);
-            process.exit(1);
-        }
-
-        await buildCommand({
-            releaseType: opts.releaseType.toLowerCase(),
-            outputDir: opts.outputDir,
-            flavor: opts.flavor,
-            mode: opts.mode.toLowerCase(),
-            envFile: opts.envFile,
-            define: opts.define,
-            verbose: opts.verbose,
-        });
-    });
 
 
 program

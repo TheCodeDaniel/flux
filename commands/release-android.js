@@ -1,4 +1,4 @@
-import { execSync } from "child_process";
+import { spawn } from "child_process";
 import fs from "fs-extra";
 import path from "path";
 import chalk from "chalk";
@@ -53,11 +53,12 @@ export async function releaseAndroidCommand(opts = {}) {
         // Step 1: Build AAB
         spinner.start(chalk.blue("Building Android AAB (release mode)..."));
 
-        let buildCmd = "flutter build appbundle --release";
+        // Build command arguments
+        const buildArgs = ["build", "appbundle", "--release"];
 
         // Add flavor if specified
         if (opts.flavor) {
-            buildCmd += ` --flavor ${opts.flavor}`;
+            buildArgs.push("--flavor", opts.flavor);
         }
 
         // Add environment file
@@ -67,27 +68,21 @@ export async function releaseAndroidCommand(opts = {}) {
                 spinner.fail(chalk.red(`Environment file not found: ${envPath}`));
                 process.exit(1);
             }
-            buildCmd += ` --dart-define-from-file=${envPath}`;
+            buildArgs.push(`--dart-define-from-file=${envPath}`);
         }
 
         // Add custom defines
         if (opts.define && opts.define.length > 0) {
             opts.define.forEach(def => {
-                buildCmd += ` --dart-define=${def}`;
+                buildArgs.push(`--dart-define=${def}`);
             });
         }
 
-        // Execute build and capture output
-        let buildOutput;
-        try {
-            buildOutput = execSync(buildCmd, {
-                cwd: process.cwd(),
-                encoding: "utf8",
-                stdio: opts.verbose ? "inherit" : "pipe"
-            });
-        } catch (error) {
+        // Execute build with spawn (keeps spinner animated)
+        const buildOutput = await runFlutterBuild(buildArgs, spinner, opts.verbose);
+
+        if (!buildOutput) {
             spinner.fail(chalk.red("Build failed!"));
-            console.error(error.stdout || error.message);
             process.exit(1);
         }
 
@@ -284,6 +279,51 @@ function formatReleaseNotes(notesInput) {
     }
 
     return [{ language: "en-US", text: "Bug fixes and improvements" }];
+}
+
+/**
+ * Run Flutter build with animated spinner
+ */
+function runFlutterBuild(args, spinner, verbose) {
+    return new Promise((resolve, reject) => {
+        const flutter = spawn("flutter", args, {
+            cwd: process.cwd(),
+            shell: true,
+        });
+
+        let stdout = "";
+        let stderr = "";
+
+        flutter.stdout.on("data", (data) => {
+            const output = data.toString();
+            stdout += output;
+            if (verbose) {
+                // In verbose mode, stop spinner and show output
+                spinner.stop();
+                process.stdout.write(output);
+            }
+        });
+
+        flutter.stderr.on("data", (data) => {
+            stderr += data.toString();
+        });
+
+        flutter.on("close", (code) => {
+            if (code === 0) {
+                resolve(stdout);
+            } else {
+                if (stderr) {
+                    console.error(stderr);
+                }
+                resolve(null);
+            }
+        });
+
+        flutter.on("error", (error) => {
+            console.error(error.message);
+            resolve(null);
+        });
+    });
 }
 
 /**
