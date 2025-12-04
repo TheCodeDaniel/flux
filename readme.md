@@ -1,6 +1,6 @@
 # Flux Mobile CLI 📱🚀
 
-> ⚠️ **BETA RELEASE** - This package is currently in beta (v0.1.0-beta.1). While the core features are stable and production-ready, expect active development and potential breaking changes before v1.0.0. Please report any issues on [GitHub](https://github.com/TheCodeDaniel/flux-mobile-cli/issues).
+> ⚠️ **BETA RELEASE** - This package is currently in beta (v0.2.0-beta.2). While the core features are stable and production-ready, expect active development and potential breaking changes before v1.0.0. Please report any issues on [GitHub](https://github.com/TheCodeDaniel/flux-mobile-cli/issues).
 
 **Flux Mobile CLI** is a powerful, open-source local CI/CD CLI tool for mobile developers. Build, test, and deploy your Flutter and React Native apps to Google Play Store and Apple App Store—all from your local machine. No mandatory cloud CI, no vendor lock-in, just simple commands that work.
 
@@ -225,6 +225,7 @@ fluxm release android --track production --flavor prod --env-file .env.prod --no
 ```
 
 This command will:
+
 - ✅ Build AAB in release mode
 - ✅ Parse build output for AAB path
 - ✅ Prompt you to confirm deployment (Y/n)
@@ -263,6 +264,7 @@ fluxm release ios --track production --flavor prod --env-file .env.prod --notes 
 ```
 
 **For TestFlight**, this command will:
+
 - ✅ Build IPA in release mode
 - ✅ Parse build output for IPA path
 - ✅ Prompt you to confirm deployment (Y/n)
@@ -271,6 +273,7 @@ fluxm release ios --track production --flavor prod --env-file .env.prod --notes 
 - ✅ Log deployment
 
 **For Production**, it does everything above PLUS:
+
 - ✅ Extract version from IPA
 - ✅ Create/find App Store version
 - ✅ Assign build to version
@@ -401,6 +404,7 @@ fluxm release ios --track production --env-file .env.prod --define API_KEY=xyz -
 **iOS Workflow (Production):**
 
 Everything from TestFlight workflow, PLUS:
+
 - Extracts version string from IPA
 - Creates/finds App Store version
 - Assigns build to version
@@ -438,7 +442,7 @@ appstore:
   issuer_id: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
   bundle_id: "com.example.myapp"
   default_track: "testflight"
-  upload_tool: "transporter"  # transporter or altool
+  upload_tool: "transporter" # transporter or altool
 
 versioning:
   strategy: auto

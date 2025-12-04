@@ -14,7 +14,7 @@ const program = new Command();
 program
     .name('fluxm')
     .description('Flux Mobile CLI - Local CI/CD for mobile apps 📱🚀')
-    .version('0.1.0-beta.1');
+    .version('0.2.0-beta.2');
 
 program
     .command('init')
