@@ -178,6 +178,7 @@ fluxm doctor
 ```
 
 > **Note:** After installation, you can use either `fluxm` (short form) or `flux-mobile` (descriptive form). Both commands work identically:
+>
 > ```bash
 > fluxm build --release-type aab
 > # OR
