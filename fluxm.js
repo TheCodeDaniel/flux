@@ -5,7 +5,7 @@ import { cleanCommand } from "./commands/clean.js";
 import { infoCommand } from "./commands/info.js";
 import { initCommand } from "./commands/init.js";
 import { releaseAndroidCommand } from "./commands/release-android.js";
-import { deployIOSCommand } from "./commands/deploy-ios.js";
+import { releaseIOSCommand } from "./commands/release-ios.js";
 import { logger } from "./utils/logger.js";
 
 
@@ -49,9 +49,9 @@ program
 
 program
     .command("release")
-    .description("Build and release Android app to Google Play Store")
-    .argument("<platform>", "Platform to release (android)")
-    .requiredOption("--track <name>", "Google Play track (internal|alpha|beta|production)")
+    .description("Build and release mobile app to App Store or Google Play Store")
+    .argument("<platform>", "Platform to release (android|ios)")
+    .requiredOption("--track <name>", "Release track (Android: internal|alpha|beta|production, iOS: testflight|production)")
     .option("--flavor <name>", "Build flavor")
     .option("--notes <text>", "Release notes (string or JSON object)")
     .option("--env-file <path>", "Path to .env file for --dart-define-from-file")
@@ -59,82 +59,48 @@ program
     .option("--verbose", "Enable verbose build output", false)
     .action(async (platform, opts) => {
         // Validate platform
-        if (platform !== "android") {
-            logger.error(`Invalid platform: "${platform}". Only "android" is currently supported.`);
-            logger.info("iOS support coming soon!");
+        const normalizedPlatform = platform.toLowerCase();
+        if (normalizedPlatform !== "android" && normalizedPlatform !== "ios") {
+            logger.error(`Invalid platform: "${platform}". Only "android" and "ios" are supported.`);
             process.exit(1);
         }
 
-        // Validate track
-        const validTracks = ['internal', 'alpha', 'beta', 'production'];
-        if (!validTracks.includes(opts.track.toLowerCase())) {
-            logger.error(`Invalid track: "${opts.track}". Only "internal", "alpha", "beta", and "production" are supported.`);
-            process.exit(1);
-        }
-
-        await releaseAndroidCommand({
-            track: opts.track.toLowerCase(),
-            flavor: opts.flavor,
-            notes: parseNotesOption(opts.notes),
-            envFile: opts.envFile,
-            define: opts.define,
-            verbose: opts.verbose,
-        });
-    });
-
-program
-    .command("deploy-ios")
-    .description("Upload IPA to App Store Connect (TestFlight or Production)")
-    .option("--artifact <path>", "Path to .ipa file (default: auto-detect from ./dist)")
-    .option("--track <name>", "App Store track (testflight|production)", "testflight")
-    .option("--notes <text>", "Release notes / What's New (string or JSON object for multiple locales)")
-    .option("--api-key-path <path>", "Override path to .p8 API key file")
-    .option("--api-key-id <id>", "Override API Key ID")
-    .option("--issuer-id <id>", "Override Issuer ID")
-    .option("--upload-tool <tool>", "Upload tool to use (transporter|altool)")
-    .action(async (opts) => {
-        // Check macOS requirement
-        if (process.platform !== 'darwin') {
-            logger.error('Deploying to iOS requires macOS.');
-            logger.info(`Current platform: ${process.platform}`);
-            process.exit(1);
-        }
-
-        // Validate artifact extension if provided
-        if (opts.artifact) {
-            const artifactExt = opts.artifact.toLowerCase().slice(opts.artifact.lastIndexOf('.'));
-
-            if (artifactExt !== '.ipa') {
-                logger.error(`Invalid artifact for iOS: "${opts.artifact}". Must be .ipa file.`);
+        // Validate track based on platform
+        const normalizedTrack = opts.track.toLowerCase();
+        if (normalizedPlatform === "android") {
+            const validTracks = ['internal', 'alpha', 'beta', 'production'];
+            if (!validTracks.includes(normalizedTrack)) {
+                logger.error(`Invalid Android track: "${opts.track}". Only "internal", "alpha", "beta", and "production" are supported.`);
+                process.exit(1);
+            }
+        } else if (normalizedPlatform === "ios") {
+            const validTracks = ['testflight', 'production'];
+            if (!validTracks.includes(normalizedTrack)) {
+                logger.error(`Invalid iOS track: "${opts.track}". Only "testflight" and "production" are supported.`);
                 process.exit(1);
             }
         }
 
-        // Validate track
-        const validTracks = ['testflight', 'production'];
-        if (!validTracks.includes(opts.track.toLowerCase())) {
-            logger.error(`Invalid track: "${opts.track}". Only "testflight" and "production" are supported.`);
-            process.exit(1);
+        // Call appropriate release command
+        if (normalizedPlatform === "android") {
+            await releaseAndroidCommand({
+                track: normalizedTrack,
+                flavor: opts.flavor,
+                notes: parseNotesOption(opts.notes),
+                envFile: opts.envFile,
+                define: opts.define,
+                verbose: opts.verbose,
+            });
+        } else if (normalizedPlatform === "ios") {
+            await releaseIOSCommand({
+                track: normalizedTrack,
+                flavor: opts.flavor,
+                notes: parseNotesOption(opts.notes),
+                envFile: opts.envFile,
+                define: opts.define,
+                verbose: opts.verbose,
+            });
         }
-
-        // Validate upload tool if provided
-        if (opts.uploadTool) {
-            const validTools = ['transporter', 'altool'];
-            if (!validTools.includes(opts.uploadTool.toLowerCase())) {
-                logger.error(`Invalid upload tool: "${opts.uploadTool}". Only "transporter" and "altool" are supported.`);
-                process.exit(1);
-            }
-        }
-
-        await deployIOSCommand({
-            artifact: opts.artifact,
-            track: opts.track.toLowerCase(),
-            notes: parseNotesOption(opts.notes), // Use same parser as Android
-            apiKeyPath: opts.apiKeyPath,
-            apiKeyId: opts.apiKeyId,
-            issuerId: opts.issuerId,
-            uploadTool: opts.uploadTool?.toLowerCase(),
-        });
     });
 
 function parseNotesOption(notes) {
