@@ -5,7 +5,7 @@ import { cleanCommand } from "./commands/clean.js";
 import { infoCommand } from "./commands/info.js";
 import { initCommand } from "./commands/init.js";
 import { buildCommand } from "./commands/build.js";
-import { deployAndroidCommand } from "./commands/deploy-android.js";
+import { releaseAndroidCommand } from "./commands/release-android.js";
 import { deployIOSCommand } from "./commands/deploy-ios.js";
 import { logger } from "./utils/logger.js";
 
@@ -91,31 +91,37 @@ program
 
 
 program
-    .command("deploy-android")
-    .description("Upload APK/AAB to Google Play Store")
-    .option("--artifact <path>", "Path to .apk or .aab file (default: auto-detect from ./dist)")
-    .option("--track <name>", "Google Play track (internal|alpha|beta|production)", "internal")
+    .command("release")
+    .description("Build and release Android app to Google Play Store")
+    .argument("<platform>", "Platform to release (android)")
+    .requiredOption("--track <name>", "Google Play track (internal|alpha|beta|production)")
+    .option("--flavor <name>", "Build flavor")
     .option("--notes <text>", "Release notes (string or JSON object)")
-    .option("--key <path>", "Override path to Google Play service account JSON")
-    .option("--dry-run", "Validate without committing", false)
-    .action(async (opts) => {
-        // Validate artifact extension if provided
-        if (opts.artifact) {
-            const validExtensions = ['.apk', '.aab'];
-            const artifactExt = opts.artifact.toLowerCase().slice(opts.artifact.lastIndexOf('.'));
-
-            if (!validExtensions.includes(artifactExt)) {
-                logger.error(`Invalid artifact for Android: "${opts.artifact}". Must be .apk or .aab file.`);
-                process.exit(1);
-            }
+    .option("--env-file <path>", "Path to .env file for --dart-define-from-file")
+    .option("--define <value...>", "Extra --dart-define values")
+    .option("--verbose", "Enable verbose build output", false)
+    .action(async (platform, opts) => {
+        // Validate platform
+        if (platform !== "android") {
+            logger.error(`Invalid platform: "${platform}". Only "android" is currently supported.`);
+            logger.info("iOS support coming soon!");
+            process.exit(1);
         }
 
-        await deployAndroidCommand({
-            artifact: opts.artifact,
-            track: opts.track,
+        // Validate track
+        const validTracks = ['internal', 'alpha', 'beta', 'production'];
+        if (!validTracks.includes(opts.track.toLowerCase())) {
+            logger.error(`Invalid track: "${opts.track}". Only "internal", "alpha", "beta", and "production" are supported.`);
+            process.exit(1);
+        }
+
+        await releaseAndroidCommand({
+            track: opts.track.toLowerCase(),
+            flavor: opts.flavor,
             notes: parseNotesOption(opts.notes),
-            key: opts.key,
-            dryRun: opts.dryRun,
+            envFile: opts.envFile,
+            define: opts.define,
+            verbose: opts.verbose,
         });
     });
 
