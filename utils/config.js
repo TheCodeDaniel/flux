@@ -5,7 +5,7 @@ import { logger } from "./logger.js";
 export function loadConfig() {
     const configPath = "./flux-mobile.yml";
     if (!fs.existsSync(configPath)) {
-        logger.error("flux-mobile.yml not found. Please run `flux init` first.");
+        logger.error("flux-mobile.yml not found. Please run `fluxm init` first.");
         process.exit(1);
     }
 

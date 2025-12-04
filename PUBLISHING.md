@@ -7,10 +7,12 @@ This guide walks you through publishing Flux Mobile CLI to npm as a beta release
 ## Prerequisites
 
 1. **npm Account**
+
    - Create account at [npmjs.com](https://www.npmjs.com/signup)
    - Verify your email address
 
 2. **Two-Factor Authentication (Recommended)**
+
    - Enable 2FA in your npm account settings for security
    - Choose "Authorization and Publishing" mode
 
@@ -27,25 +29,30 @@ This guide walks you through publishing Flux Mobile CLI to npm as a beta release
 Before publishing, ensure everything is ready:
 
 ### ✅ 1. Version Check
+
 ```bash
 # Current version should be 0.1.0-beta.1
 grep version package.json
 ```
 
 ### ✅ 2. Run Tests
+
 ```bash
 npm run test:unit
 ```
+
 Should show: **17/19 tests passing (89% pass rate)**
 
 ### ✅ 3. Verify Package Contents
+
 ```bash
 # See what files will be included in the package
 npm pack --dry-run
 ```
 
 This shows all files that will be published. Verify that:
-- ✅ Source files are included (`commands/`, `utils/`, `flux.js`)
+
+- ✅ Source files are included (`commands/`, `utils/`, `fluxm.js`)
 - ✅ Documentation is included (`README.md`, `TESTING.md`)
 - ✅ `package.json` is included
 - ❌ Tests are excluded (`tests/` directory)
@@ -53,6 +60,7 @@ This shows all files that will be published. Verify that:
 - ❌ `.env` files are excluded
 
 ### ✅ 4. Test Package Locally
+
 ```bash
 # Create a tarball
 npm pack
@@ -71,6 +79,7 @@ rm flux-mobile-cli-0.1.0-beta.1.tgz
 ```
 
 ### ✅ 5. Check Package Name Availability
+
 ```bash
 # Verify the name "flux-mobile-cli" is available (or already yours)
 npm view flux-mobile-cli
@@ -91,6 +100,7 @@ npm publish --tag beta --access public
 ```
 
 **Flags explained:**
+
 - `--tag beta` - Marks this as a beta release (not `latest`)
 - `--access public` - Makes the package publicly available
 
@@ -126,16 +136,20 @@ fluxm init
 ### Share Your Release!
 
 1. **GitHub Release**
+
    ```bash
    git tag v0.1.0-beta.1
    git push origin v0.1.0-beta.1
    ```
+
    Then create a release on GitHub with:
+
    - Title: "v0.1.0-beta.1 - Initial Beta Release"
    - Description: Highlight key features, known limitations, and beta warning
 
 2. **Update README Badge** (optional)
    Add npm version badge to README:
+
    ```markdown
    [![npm version](https://badge.fury.io/js/flux-mobile-cli.svg)](https://www.npmjs.com/package/flux-mobile-cli)
    ```
@@ -167,6 +181,7 @@ npm install -g flux-mobile-cli@0.1.0-beta.1
 When you make updates and want to release a new beta:
 
 ### 1. Bump Version
+
 ```bash
 # For new features
 npm version preminor --preid=beta
@@ -182,6 +197,7 @@ npm version prerelease --preid=beta
 ```
 
 ### 2. Publish
+
 ```bash
 npm publish --tag beta --access public
 ```
@@ -193,19 +209,23 @@ npm publish --tag beta --access public
 When ready to release stable version:
 
 ### 1. Update Version
+
 ```bash
 npm version 1.0.0
 ```
 
 ### 2. Update README
+
 Remove the beta warning banner
 
 ### 3. Publish as Latest
+
 ```bash
 npm publish --access public
 ```
 
 This will tag it as `latest` and users can install with:
+
 ```bash
 npm install -g flux-mobile-cli
 ```
@@ -231,20 +251,24 @@ npm unpublish flux-mobile-cli --force
 ## Troubleshooting
 
 ### "Package name too similar to existing package"
+
 - Change the name in `package.json` to something unique
 - Try: `@yourusername/flux-mobile-cli` (scoped package)
 
 ### "You must verify your email"
+
 - Check your npm account email
 - Click verification link
 - Try publishing again
 
 ### "You do not have permission to publish"
+
 - Ensure you're logged in: `npm whoami`
 - Check package name isn't taken by someone else
 - Use `--access public` flag
 
 ### "402 Payment Required"
+
 - Private packages require paid npm account
 - Use `--access public` to publish as public (free)
 

@@ -90,10 +90,10 @@ async function createFluxYml(projectDir, framework, opts = { force: false }) {
         throw new Error('flux-mobile.yml already exists. Use --force to overwrite.');
     }
 
-    if (exists && opts.force) {
-        const backup = path.join(projectDir, `flux-mobile.yml.bak.${timestamp()}`);
-        await fs.copyFile(fluxPath, backup);
-    }
+    // if (exists && opts.force) {
+    //     const backup = path.join(projectDir, `flux-mobile.yml.bak.${timestamp()}`);
+    //     await fs.copyFile(fluxPath, backup);
+    // }
 
     await writeYamlFile(fluxPath, DEFAULT_FLUX_YML(framework));
     return fluxPath;
@@ -110,8 +110,8 @@ async function registerAssetInPubspec(projectDir, assetRelativePath) {
     const original = await fs.readFile(pubspecPath, 'utf8');
     const doc = YAML.parseDocument(original);
 
-    const backupPath = path.join(projectDir, `pubspec.yaml.bak.${timestamp()}`);
-    await fs.copyFile(pubspecPath, backupPath);
+    // const backupPath = path.join(projectDir, `pubspec.yaml.bak.${timestamp()}`);
+    // await fs.copyFile(pubspecPath, backupPath);
 
     let flutterNode = doc.get('flutter', true);
     if (!flutterNode) {
@@ -131,7 +131,8 @@ async function registerAssetInPubspec(projectDir, assetRelativePath) {
     if (normalized.startsWith('./')) normalized = normalized.slice(2);
 
     if (assets.includes(normalized)) {
-        return { updated: false, backupPath };
+        // return { updated: false, backupPath };
+        return { updated: false };
     }
 
     const seq = doc.getIn(['flutter', 'assets']);
@@ -140,7 +141,8 @@ async function registerAssetInPubspec(projectDir, assetRelativePath) {
     const newYaml = doc.toString();
     await fs.writeFile(pubspecPath, newYaml, 'utf8');
 
-    return { updated: true, backupPath };
+    // return { updated: true, backupPath };
+    return { updated: true };
 }
 
 /**
@@ -184,9 +186,11 @@ export async function initCommand(projectDir = process.cwd(), opts = { force: fa
         console.log(chalk.green(`Created ${path.relative(process.cwd(), createdFlux)}`));
 
         if (framework === 'flutter') {
-            const { updated, backupPath } = await registerAssetInPubspec(projectDir, './flux-mobile.yml');
+            // const { updated, backupPath } = await registerAssetInPubspec(projectDir, './flux-mobile.yml');
+            const { updated } = await registerAssetInPubspec(projectDir, './flux-mobile.yml');
             if (updated) {
-                console.log(chalk.green(`Registered flux-mobile.yml in pubspec.yaml (backup saved to ${path.basename(backupPath)})`));
+                // console.log(chalk.green(`Registered flux-mobile.yml in pubspec.yaml (backup saved to ${path.basename(backupPath)})`));
+                console.log(chalk.green(`Registered flux-mobile.yml in pubspec.yaml`));
                 console.log(chalk.yellow('Note: run `flutter pub get` if you plan to load the asset at runtime.'));
             } else {
                 console.log(chalk.gray('flux-mobile.yml already registered in pubspec.yaml — no change.'));

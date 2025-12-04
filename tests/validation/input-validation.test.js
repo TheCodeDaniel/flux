@@ -2,35 +2,25 @@
 import { describe, test, expect } from '@jest/globals';
 
 describe('Input Validation Tests', () => {
-    describe('Release Type Validation', () => {
-        test('should accept valid release types', () => {
-            const validTypes = ['apk', 'aab', 'ipa'];
-            validTypes.forEach(type => {
-                expect(['apk', 'aab', 'ipa'].includes(type.toLowerCase())).toBe(true);
+    describe('Platform Validation', () => {
+        test('should accept valid platforms', () => {
+            const validPlatforms = ['android', 'ios'];
+            validPlatforms.forEach(platform => {
+                expect(['android', 'ios'].includes(platform.toLowerCase())).toBe(true);
             });
         });
 
-        test('should reject invalid release types', () => {
-            const invalidTypes = ['exe', 'dmg', 'zip', 'tar'];
-            invalidTypes.forEach(type => {
-                expect(['apk', 'aab', 'ipa'].includes(type.toLowerCase())).toBe(false);
-            });
-        });
-    });
-
-    describe('Build Mode Validation', () => {
-        test('should accept valid build modes', () => {
-            const validModes = ['release', 'debug', 'profile'];
-            validModes.forEach(mode => {
-                expect(['release', 'debug', 'profile'].includes(mode.toLowerCase())).toBe(true);
+        test('should reject invalid platforms', () => {
+            const invalidPlatforms = ['web', 'desktop', 'windows', 'macos', 'linux'];
+            invalidPlatforms.forEach(platform => {
+                expect(['android', 'ios'].includes(platform.toLowerCase())).toBe(false);
             });
         });
 
-        test('should reject invalid build modes', () => {
-            const invalidModes = ['production', 'development', 'test'];
-            invalidModes.forEach(mode => {
-                expect(['release', 'debug', 'profile'].includes(mode.toLowerCase())).toBe(false);
-            });
+        test('should handle case insensitivity for platforms', () => {
+            expect(['android', 'ios'].includes('Android'.toLowerCase())).toBe(true);
+            expect(['android', 'ios'].includes('IOS'.toLowerCase())).toBe(true);
+            expect(['android', 'ios'].includes('ANDROID'.toLowerCase())).toBe(true);
         });
     });
 
@@ -46,6 +36,22 @@ describe('Input Validation Tests', () => {
             const validTracks = ['testflight', 'production'];
             validTracks.forEach(track => {
                 expect(['testflight', 'production'].includes(track)).toBe(true);
+            });
+        });
+
+        test('should reject iOS tracks for Android', () => {
+            const iosTracks = ['testflight'];
+            const androidValidTracks = ['internal', 'alpha', 'beta', 'production'];
+            iosTracks.forEach(track => {
+                expect(androidValidTracks.includes(track)).toBe(false);
+            });
+        });
+
+        test('should reject Android tracks for iOS (except production)', () => {
+            const androidOnlyTracks = ['internal', 'alpha', 'beta'];
+            const iosValidTracks = ['testflight', 'production'];
+            androidOnlyTracks.forEach(track => {
+                expect(iosValidTracks.includes(track)).toBe(false);
             });
         });
     });

@@ -1,4 +1,4 @@
-# Flux CLI - Testing Guide
+# Flux Mobile CLI - Testing Guide
 
 ## ✅ Test Suite Status
 
@@ -13,7 +13,7 @@
 ## 📁 Test Structure
 
 ```
-flux-cli/
+flux-mobile-cli/
 ├── tests/
 │   ├── commands/           # CLI command tests
 │   │   └── init.test.js
