@@ -48,8 +48,10 @@ Flux Mobile CLI solves these problems:
 
 ### ✅ **Production-Ready Automation**
 
-- **Full iOS automation**: Build IPA → Upload → Submit for App Store review (all from CLI!)
-- **Full Android automation**: Build APK/AAB → Upload → Deploy to any track
+- **Unified workflow**: Build + Deploy in one command for both platforms
+- **Full iOS automation**: Build IPA → Confirm → Upload → Submit for App Store review
+- **Full Android automation**: Build AAB → Confirm → Upload → Deploy to any track
+- Interactive deployment confirmation
 - Automatic version extraction from artifacts
 - Multi-locale release notes support
 - Comprehensive error handling
@@ -82,19 +84,23 @@ Flux Mobile CLI solves these problems:
 
 ### Android
 
-- ✅ Build APK/AAB with flavors
+- ✅ **Unified build + deploy workflow** (one command does it all)
+- ✅ Build AAB with flavors
 - ✅ Deploy to Google Play (internal/alpha/beta/production)
-- ✅ Automatic artifact detection
+- ✅ Interactive deployment confirmation
+- ✅ Animated build progress with live spinner
 - ✅ Multi-language release notes
-- ✅ Dry-run mode
+- ✅ Auto-parse build output for AAB path
 
 ### iOS (macOS only)
 
+- ✅ **Unified build + deploy workflow** (one command does it all)
 - ✅ Build IPA with flavors
 - ✅ Upload to App Store Connect
 - ✅ Automatic TestFlight submission
 - ✅ **Full production automation**: Version extraction → Assignment → Release notes → Submit for review
-- ✅ Interactive upload tool selection
+- ✅ Interactive deployment confirmation
+- ✅ Animated build progress with live spinner
 - ✅ Multi-locale What's New support
 
 ### Developer Tools
@@ -119,13 +125,16 @@ Flux Mobile CLI solves these problems:
 - Initialize project config with `fluxm init`
 - Validate environment with `fluxm doctor`
 - Clean build artifacts with `fluxm clean`
-- Build Android (APK/AAB) and iOS (IPA) apps
+- **Unified release workflow**: Build + Deploy in one command
+- Build Android (AAB) and iOS (IPA) apps
 - Deploy to Google Play (all tracks)
 - Deploy to App Store Connect (TestFlight or Production)
+- Interactive deployment confirmation (Y/n prompts)
 - Flavor/Scheme support for staging/production builds
-- Environment variable injection
+- Environment variable injection via `--env-file` and `--define`
 - Multi-locale release notes
-- Audit logging
+- Animated build progress
+- Audit logging to `.flux-mobile/deployments.json`
 
 ---
 
@@ -180,9 +189,9 @@ fluxm doctor
 > **Note:** After installation, you can use either `fluxm` (short form) or `flux-mobile` (descriptive form). Both commands work identically:
 >
 > ```bash
-> fluxm build --release-type aab
+> fluxm release android --track internal
 > # OR
-> flux-mobile build --release-type aab
+> flux-mobile release android --track internal
 > ```
 
 ---
@@ -205,17 +214,23 @@ playstore:
   package_name: com.example.myapp
 ```
 
-3. **Build**:
+3. **Build & Release** (unified command):
 
 ```bash
-fluxm build --release-type aab
+# Build AAB + Deploy to Play Store (one command!)
+fluxm release android --track internal --notes "First release!"
+
+# With flavor and environment variables
+fluxm release android --track production --flavor prod --env-file .env.prod --notes "v1.0.0"
 ```
 
-4. **Deploy**:
-
-```bash
-fluxm deploy-android --track internal --notes "First release!"
-```
+This command will:
+- ✅ Build AAB in release mode
+- ✅ Parse build output for AAB path
+- ✅ Prompt you to confirm deployment (Y/n)
+- ✅ Upload to Google Play Store
+- ✅ Assign to specified track
+- ✅ Log deployment to `.flux-mobile/deployments.json`
 
 ### iOS (App Store Connect)
 
@@ -237,31 +252,30 @@ appstore:
   bundle_id: com.example.myapp
 ```
 
-3. **Build**:
+3. **Build & Release** (unified command):
 
 ```bash
-fluxm build --release-type ipa
+# Build IPA + Deploy to TestFlight (one command!)
+fluxm release ios --track testflight --notes "Beta build"
+
+# Deploy to Production with full automation
+fluxm release ios --track production --flavor prod --env-file .env.prod --notes "v1.0.0"
 ```
 
-4. **Deploy to TestFlight**:
+**For TestFlight**, this command will:
+- ✅ Build IPA in release mode
+- ✅ Parse build output for IPA path
+- ✅ Prompt you to confirm deployment (Y/n)
+- ✅ Upload to App Store Connect
+- ✅ Submit to TestFlight
+- ✅ Log deployment
 
-```bash
-fluxm deploy-ios --track testflight
-```
-
-5. **Deploy to Production** (full automation!):
-
-```bash
-fluxm deploy-ios --track production --notes "Bug fixes"
-```
-
-This automatically:
-
-- ✅ Uploads IPA
-- ✅ Extracts version
-- ✅ Creates App Store version
-- ✅ Sets release notes
-- ✅ **Submits for review**
+**For Production**, it does everything above PLUS:
+- ✅ Extract version from IPA
+- ✅ Create/find App Store version
+- ✅ Assign build to version
+- ✅ Set release notes
+- ✅ **Submit for App Store review automatically!**
 
 ---
 
@@ -313,114 +327,85 @@ fluxm info
 
 ---
 
-### `fluxm build`
+### `fluxm release`
 
-Build mobile application.
+Build and release your mobile app in one unified command.
 
 ```bash
-fluxm build --release-type <apk|aab|ipa> [options]
+fluxm release <platform> --track <track> [options]
 ```
+
+**Arguments:**
+
+- `<platform>` — Platform to release: `android` or `ios`
 
 **Options:**
 
-- `--release-type <type>` — Build type (required): `apk`, `aab`, or `ipa`
-- `--output-dir <path>` — Output directory (default: `./dist`)
+- `--track <name>` — **Required**. Release track:
+  - **Android**: `internal`, `alpha`, `beta`, `production`
+  - **iOS**: `testflight`, `production`
 - `--flavor <name>` — Build flavor/scheme
-- `--mode <mode>` — Build mode: `release`, `debug`, `profile` (default: `release`)
+- `--notes <text>` — Release notes (string or JSON for multi-locale)
 - `--env-file <path>` — Environment file for `--dart-define-from-file`
 - `--define <value...>` — Additional `--dart-define` values
-- `--verbose` — Verbose output
+- `--verbose` — Show verbose build output
+
+**Workflow:**
+
+1. Builds the app (AAB for Android, IPA for iOS)
+2. Parses Flutter build output for artifact path
+3. **Prompts you to confirm deployment** (Y/n)
+4. Uploads to App Store Connect or Google Play Store
+5. Assigns to specified track
+6. Logs deployment to `.flux-mobile/deployments.json`
 
 **Examples:**
 
 ```bash
-# Build production AAB
-fluxm build --release-type aab
+# Android - Build AAB + Deploy to internal track
+fluxm release android --track internal --notes "First release!"
 
-# Build with flavor
-fluxm build --release-type apk --flavor dev --mode debug
+# Android - Production with flavor
+fluxm release android --track production --flavor prod --env-file .env.prod --notes "v1.0.0"
 
-# Build with environment variables
-fluxm build --release-type ipa --env-file .env.prod
+# Android - Multi-language notes
+fluxm release android --track beta --notes '{"en-US":"English","es-ES":"Español"}'
+
+# iOS - Build IPA + Deploy to TestFlight
+fluxm release ios --track testflight --notes "Beta build"
+
+# iOS - Production with full automation (auto-submits for review!)
+fluxm release ios --track production --flavor prod --notes "Bug fixes and improvements"
+
+# iOS - With environment variables
+fluxm release ios --track production --env-file .env.prod --define API_KEY=xyz --verbose
 ```
 
----
+**Android Workflow:**
 
-### `fluxm deploy-android`
-
-Deploy to Google Play Store.
-
-```bash
-fluxm deploy-android [options]
-```
-
-**Options:**
-
-- `--artifact <path>` — Path to `.apk` or `.aab` (auto-detected)
-- `--track <name>` — Track: `internal`, `alpha`, `beta`, `production` (default: `internal`)
-- `--notes <text>` — Release notes (string or JSON)
-- `--key <path>` — Override service account path
-- `--dry-run` — Validate without committing
-
-**Examples:**
-
-```bash
-# Deploy to internal
-fluxm deploy-android --track internal
-
-# Production with notes
-fluxm deploy-android --track production --notes "Major update"
-
-# Multi-language notes
-fluxm deploy-android --notes '{"en-US":"English","es-ES":"Español"}'
-```
-
----
-
-### `fluxm deploy-ios`
-
-Deploy to App Store Connect.
-
-**Requires macOS**
-
-```bash
-fluxm deploy-ios [options]
-```
-
-**Options:**
-
-- `--artifact <path>` — Path to `.ipa` (auto-detected)
-- `--track <name>` — Track: `testflight` or `production` (default: `testflight`)
-- `--notes <text>` — Release notes (string or JSON)
-- `--api-key-path <path>` — Override `.p8` file path
-- `--api-key-id <id>` — Override API Key ID
-- `--issuer-id <id>` — Override Issuer ID
-- `--upload-tool <tool>` — Upload tool: `transporter` or `altool`
-
-**Examples:**
-
-```bash
-# Deploy to TestFlight
-fluxm deploy-ios --track testflight
-
-# Production with auto-submission
-fluxm deploy-ios --track production --notes "Bug fixes"
-
-# Multi-locale notes
-fluxm deploy-ios --notes '{"en-US":"English","fr-FR":"Français"}'
-
-# Use altool
-fluxm deploy-ios --upload-tool altool
-```
-
-**Production Track:**
-
-- Uploads IPA
-- Extracts version from IPA automatically
-- Creates/finds App Store version
-- Assigns build
+- Runs `flutter build appbundle --release`
+- Parses AAB path from build output
+- Prompts for deployment confirmation
+- Uploads to Google Play via Android Publisher API
+- Assigns to specified track
 - Sets release notes
-- **Submits for App Store review**
+
+**iOS Workflow (TestFlight):**
+
+- Runs `flutter build ipa --release`
+- Parses IPA path from build output
+- Prompts for deployment confirmation
+- Uploads to App Store Connect via Transporter/altool
+- Submits to TestFlight
+
+**iOS Workflow (Production):**
+
+Everything from TestFlight workflow, PLUS:
+- Extracts version string from IPA
+- Creates/finds App Store version
+- Assigns build to version
+- Sets release notes
+- **Automatically submits for App Store review**
 
 ---
 
@@ -453,14 +438,10 @@ appstore:
   issuer_id: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
   bundle_id: "com.example.myapp"
   default_track: "testflight"
-  upload_tool: "transporter"
+  upload_tool: "transporter"  # transporter or altool
 
 versioning:
   strategy: auto
-
-build:
-  output_dir: "./dist"
-  release_type: "aab"
 ```
 
 ### Google Play Console Setup
@@ -528,10 +509,11 @@ chmod 600 keys/*.json
 
 ### Deployment Best Practices
 
-1. Test with `--dry-run` first
-2. Use internal/testflight for testing
-3. Verify builds before deploying
-4. Review deployment logs
+1. Use internal/testflight tracks for testing first
+2. Always review the deployment confirmation prompt carefully
+3. Use `--verbose` flag to see detailed build output
+4. Review deployment logs at `.flux-mobile/deployments.json`
+5. Test with different flavors before production release
 
 ---
 
@@ -543,15 +525,21 @@ chmod 600 keys/*.json
 A: Run `fluxm doctor`
 
 **Q: Where are build artifacts?**
-A: Default: `./dist`
+A: They're built directly by Flutter. Android AAB: `build/app/outputs/bundle/`, iOS IPA: `build/ios/ipa/`
+
+**Q: Can I skip the deployment prompt?**
+A: No, the interactive confirmation is a safety feature to prevent accidental deployments
 
 ### Android
 
 **Q: 403 permission error?**
 A: Verify service account has Play Console access and API is enabled
 
-**Q: Artifact not found?**
-A: Run `fluxm build --release-type aab` first
+**Q: Build fails or AAB not found?**
+A: Ensure Flutter is installed and run `flutter doctor` to check your environment
+
+**Q: Can I build APK instead of AAB?**
+A: The unified release command only supports AAB for Play Store deployment (as required by Google Play)
 
 ### iOS
 
@@ -592,12 +580,16 @@ npm run test:unit
 
 ### ✅ Completed
 
-- Flutter Android/iOS builds
-- Google Play deployment
-- App Store Connect deployment
-- Full iOS production automation
+- **Unified build + deploy workflow** for Android and iOS
+- Flutter Android/iOS builds with flavors
+- Google Play deployment (all tracks)
+- App Store Connect deployment (TestFlight & Production)
+- Full iOS production automation with auto-review submission
+- Interactive deployment confirmation prompts
+- Animated build progress with live spinners
 - Test suite (89% pass rate)
 - Multi-locale release notes
+- Deployment audit logging
 
 ### 📋 Planned
 
