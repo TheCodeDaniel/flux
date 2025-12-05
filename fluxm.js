@@ -6,6 +6,7 @@ import { infoCommand } from "./commands/info.js";
 import { initCommand } from "./commands/init.js";
 import { releaseAndroidCommand } from "./commands/release-android.js";
 import { releaseIOSCommand } from "./commands/release-ios.js";
+import { upgradeCommand } from "./commands/upgrade.js";
 import { logger } from "./utils/logger.js";
 
 
@@ -14,7 +15,7 @@ const program = new Command();
 program
     .name('fluxm')
     .description('Flux Mobile CLI - Local CI/CD for mobile apps 📱🚀')
-    .version('0.2.0-beta.2');
+    .version('0.3.0-beta.3');
 
 program
     .command('init')
@@ -44,6 +45,11 @@ program
     .description("Show project and system info")
     .action(infoCommand);
 
+program
+    .command("upgrade")
+    .description("Upgrade Flux Mobile CLI to the latest version")
+    .action(upgradeCommand);
+
 
 
 
@@ -56,6 +62,7 @@ program
     .option("--notes <text>", "Release notes (string or JSON object)")
     .option("--env-file <path>", "Path to .env file for --dart-define-from-file")
     .option("--define <value...>", "Extra --dart-define values")
+    .option("--obfuscate", "Obfuscate Dart code for increased security", false)
     .option("--verbose", "Enable verbose build output", false)
     .action(async (platform, opts) => {
         // Validate platform
@@ -89,6 +96,7 @@ program
                 notes: parseNotesOption(opts.notes),
                 envFile: opts.envFile,
                 define: opts.define,
+                obfuscate: opts.obfuscate,
                 verbose: opts.verbose,
             });
         } else if (normalizedPlatform === "ios") {
@@ -98,6 +106,7 @@ program
                 notes: parseNotesOption(opts.notes),
                 envFile: opts.envFile,
                 define: opts.define,
+                obfuscate: opts.obfuscate,
                 verbose: opts.verbose,
             });
         }

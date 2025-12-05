@@ -51,10 +51,18 @@ export async function releaseAndroidCommand(opts = {}) {
         }
 
         // Step 1: Build AAB
-        spinner.start(chalk.blue("Building Android AAB (release mode)..."));
+        const buildMessage = opts.obfuscate
+            ? "Building Android AAB (release mode with obfuscation)..."
+            : "Building Android AAB (release mode)...";
+        spinner.start(chalk.blue(buildMessage));
 
         // Build command arguments
         const buildArgs = ["build", "appbundle", "--release"];
+
+        // Add obfuscation if requested
+        if (opts.obfuscate) {
+            buildArgs.push("--obfuscate", "--split-debug-info=build/app/outputs/symbols");
+        }
 
         // Add flavor if specified
         if (opts.flavor) {
@@ -288,7 +296,6 @@ function runFlutterBuild(args, spinner, verbose) {
     return new Promise((resolve, reject) => {
         const flutter = spawn("flutter", args, {
             cwd: process.cwd(),
-            shell: true,
         });
 
         let stdout = "";

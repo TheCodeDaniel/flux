@@ -1,6 +1,6 @@
 # Flux Mobile CLI 📱🚀
 
-> ⚠️ **BETA RELEASE** - This package is currently in beta (v0.2.0-beta.2). While the core features are stable and production-ready, expect active development and potential breaking changes before v1.0.0. Please report any issues on [GitHub](https://github.com/TheCodeDaniel/flux-mobile-cli/issues).
+> ⚠️ **BETA RELEASE** - This package is currently in beta (v0.3.0-beta.3). While the core features are stable and production-ready, expect active development and potential breaking changes before v1.0.0. Please report any issues on [GitHub](https://github.com/TheCodeDaniel/flux-mobile-cli/issues).
 
 **Flux Mobile CLI** is a powerful, open-source local CI/CD CLI tool for mobile developers. Build, test, and deploy your Flutter and React Native apps to Google Play Store and Apple App Store—all from your local machine. No mandatory cloud CI, no vendor lock-in, just simple commands that work.
 
@@ -85,6 +85,7 @@ Flux Mobile CLI solves these problems:
 ### Android
 
 - ✅ **Unified build + deploy workflow** (one command does it all)
+- ✅ **Optional code obfuscation** (use --obfuscate flag)
 - ✅ Build AAB with flavors
 - ✅ Deploy to Google Play (internal/alpha/beta/production)
 - ✅ Interactive deployment confirmation
@@ -95,6 +96,7 @@ Flux Mobile CLI solves these problems:
 ### iOS (macOS only)
 
 - ✅ **Unified build + deploy workflow** (one command does it all)
+- ✅ **Optional code obfuscation** (use --obfuscate flag)
 - ✅ Build IPA with flavors
 - ✅ Upload to App Store Connect
 - ✅ Automatic TestFlight submission
@@ -125,7 +127,9 @@ Flux Mobile CLI solves these problems:
 - Initialize project config with `fluxm init`
 - Validate environment with `fluxm doctor`
 - Clean build artifacts with `fluxm clean`
+- **Self-update command**: `fluxm upgrade` to get latest version
 - **Unified release workflow**: Build + Deploy in one command
+- **Optional code obfuscation**: Use `--obfuscate` flag for increased security
 - Build Android (AAB) and iOS (IPA) apps
 - Deploy to Google Play (all tracks)
 - Deploy to App Store Connect (TestFlight or Production)
@@ -330,6 +334,24 @@ fluxm info
 
 ---
 
+### `fluxm upgrade`
+
+Upgrade Flux Mobile CLI to the latest version.
+
+```bash
+fluxm upgrade
+```
+
+Automatically checks for updates and upgrades to the latest version from npm.
+
+**Note:** May require `sudo` on some systems:
+
+```bash
+sudo npm install -g flux-mobile-cli@latest
+```
+
+---
+
 ### `fluxm release`
 
 Build and release your mobile app in one unified command.
@@ -351,6 +373,7 @@ fluxm release <platform> --track <track> [options]
 - `--notes <text>` — Release notes (string or JSON for multi-locale)
 - `--env-file <path>` — Environment file for `--dart-define-from-file`
 - `--define <value...>` — Additional `--dart-define` values
+- `--obfuscate` — Obfuscate Dart code for increased security (optional)
 - `--verbose` — Show verbose build output
 
 **Workflow:**
@@ -368,25 +391,26 @@ fluxm release <platform> --track <track> [options]
 # Android - Build AAB + Deploy to internal track
 fluxm release android --track internal --notes "First release!"
 
-# Android - Production with flavor
-fluxm release android --track production --flavor prod --env-file .env.prod --notes "v1.0.0"
+# Android - Production with flavor and obfuscation
+fluxm release android --track production --flavor prod --env-file .env.prod --obfuscate --notes "v1.0.0"
 
 # Android - Multi-language notes
 fluxm release android --track beta --notes '{"en-US":"English","es-ES":"Español"}'
 
-# iOS - Build IPA + Deploy to TestFlight
-fluxm release ios --track testflight --notes "Beta build"
+# iOS - Build IPA + Deploy to TestFlight with obfuscation
+fluxm release ios --track testflight --obfuscate --notes "Beta build"
 
 # iOS - Production with full automation (auto-submits for review!)
-fluxm release ios --track production --flavor prod --notes "Bug fixes and improvements"
+fluxm release ios --track production --flavor prod --obfuscate --notes "Bug fixes and improvements"
 
-# iOS - With environment variables
-fluxm release ios --track production --env-file .env.prod --define API_KEY=xyz --verbose
+# iOS - With environment variables and obfuscation
+fluxm release ios --track production --env-file .env.prod --define API_KEY=xyz --obfuscate --verbose
 ```
 
 **Android Workflow:**
 
 - Runs `flutter build appbundle --release`
+- Optionally obfuscates code with `--obfuscate` flag
 - Parses AAB path from build output
 - Prompts for deployment confirmation
 - Uploads to Google Play via Android Publisher API
@@ -396,6 +420,7 @@ fluxm release ios --track production --env-file .env.prod --define API_KEY=xyz -
 **iOS Workflow (TestFlight):**
 
 - Runs `flutter build ipa --release`
+- Optionally obfuscates code with `--obfuscate` flag
 - Parses IPA path from build output
 - Prompts for deployment confirmation
 - Uploads to App Store Connect via Transporter/altool
@@ -410,6 +435,30 @@ Everything from TestFlight workflow, PLUS:
 - Assigns build to version
 - Sets release notes
 - **Automatically submits for App Store review**
+
+### 🔒 **Code Obfuscation (Optional)**
+
+Use the `--obfuscate` flag to obfuscate your Dart code for increased security:
+
+```bash
+fluxm release android --track production --obfuscate
+fluxm release ios --track production --obfuscate
+```
+
+**Benefits:**
+
+- Makes reverse engineering significantly harder
+- Protects your API keys and business logic
+- Generates debug symbol files for crash reporting
+
+**Debug symbols are saved to:**
+
+- Android: `build/app/outputs/symbols`
+- iOS: `build/ios/symbols`
+
+Upload these to Firebase Crashlytics or your crash reporting tool to decode stack traces.
+
+**Note:** Obfuscation works exactly like Flutter's native `--obfuscate` flag - same syntax, zero learning curve!
 
 ---
 
