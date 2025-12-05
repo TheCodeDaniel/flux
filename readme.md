@@ -85,6 +85,7 @@ Flux Mobile CLI solves these problems:
 ### Android
 
 - ✅ **Unified build + deploy workflow** (one command does it all)
+- ✅ **Automatic code obfuscation** (security by default)
 - ✅ Build AAB with flavors
 - ✅ Deploy to Google Play (internal/alpha/beta/production)
 - ✅ Interactive deployment confirmation
@@ -95,6 +96,7 @@ Flux Mobile CLI solves these problems:
 ### iOS (macOS only)
 
 - ✅ **Unified build + deploy workflow** (one command does it all)
+- ✅ **Automatic code obfuscation** (security by default)
 - ✅ Build IPA with flavors
 - ✅ Upload to App Store Connect
 - ✅ Automatic TestFlight submission
@@ -125,7 +127,9 @@ Flux Mobile CLI solves these problems:
 - Initialize project config with `fluxm init`
 - Validate environment with `fluxm doctor`
 - Clean build artifacts with `fluxm clean`
+- **Self-update command**: `fluxm upgrade` to get latest version
 - **Unified release workflow**: Build + Deploy in one command
+- **Automatic code obfuscation**: All builds are obfuscated by default for security
 - Build Android (AAB) and iOS (IPA) apps
 - Deploy to Google Play (all tracks)
 - Deploy to App Store Connect (TestFlight or Production)
@@ -330,6 +334,23 @@ fluxm info
 
 ---
 
+### `fluxm upgrade`
+
+Upgrade Flux Mobile CLI to the latest version.
+
+```bash
+fluxm upgrade
+```
+
+Automatically checks for updates and upgrades to the latest version from npm.
+
+**Note:** May require `sudo` on some systems:
+```bash
+sudo npm install -g flux-mobile-cli@latest
+```
+
+---
+
 ### `fluxm release`
 
 Build and release your mobile app in one unified command.
@@ -386,7 +407,8 @@ fluxm release ios --track production --env-file .env.prod --define API_KEY=xyz -
 
 **Android Workflow:**
 
-- Runs `flutter build appbundle --release`
+- Runs `flutter build appbundle --release` with **automatic code obfuscation**
+- Generates debug symbols at `build/app/outputs/symbols`
 - Parses AAB path from build output
 - Prompts for deployment confirmation
 - Uploads to Google Play via Android Publisher API
@@ -395,7 +417,8 @@ fluxm release ios --track production --env-file .env.prod --define API_KEY=xyz -
 
 **iOS Workflow (TestFlight):**
 
-- Runs `flutter build ipa --release`
+- Runs `flutter build ipa --release` with **automatic code obfuscation**
+- Generates debug symbols at `build/ios/symbols`
 - Parses IPA path from build output
 - Prompts for deployment confirmation
 - Uploads to App Store Connect via Transporter/altool
@@ -410,6 +433,20 @@ Everything from TestFlight workflow, PLUS:
 - Assigns build to version
 - Sets release notes
 - **Automatically submits for App Store review**
+
+### 🔒 **Security: Built-in Code Obfuscation**
+
+All builds are **automatically obfuscated** for security. This:
+- Makes reverse engineering significantly harder
+- Protects your API keys and business logic
+- Generates debug symbol files for crash reporting
+- **Cannot be disabled** - security by default!
+
+Debug symbols are saved to:
+- Android: `build/app/outputs/symbols`
+- iOS: `build/ios/symbols`
+
+Upload these to Firebase Crashlytics or your crash reporting tool to decode stack traces.
 
 ---
 

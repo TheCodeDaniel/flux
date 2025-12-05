@@ -51,10 +51,10 @@ export async function releaseAndroidCommand(opts = {}) {
         }
 
         // Step 1: Build AAB
-        spinner.start(chalk.blue("Building Android AAB (release mode)..."));
+        spinner.start(chalk.blue("Building Android AAB (release mode with obfuscation)..."));
 
-        // Build command arguments
-        const buildArgs = ["build", "appbundle", "--release"];
+        // Build command arguments - obfuscation enabled by default for security
+        const buildArgs = ["build", "appbundle", "--release", "--obfuscate", "--split-debug-info=build/app/outputs/symbols"];
 
         // Add flavor if specified
         if (opts.flavor) {

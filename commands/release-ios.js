@@ -70,10 +70,10 @@ export async function releaseIOSCommand(opts = {}) {
         }
 
         // Step 1: Build IPA
-        spinner.start(chalk.blue("Building iOS IPA (release mode)..."));
+        spinner.start(chalk.blue("Building iOS IPA (release mode with obfuscation)..."));
 
-        // Build command arguments
-        const buildArgs = ["build", "ipa", "--release"];
+        // Build command arguments - obfuscation enabled by default for security
+        const buildArgs = ["build", "ipa", "--release", "--obfuscate", "--split-debug-info=build/ios/symbols"];
 
         // Add flavor if specified
         if (opts.flavor) {

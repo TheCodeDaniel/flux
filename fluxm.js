@@ -6,6 +6,7 @@ import { infoCommand } from "./commands/info.js";
 import { initCommand } from "./commands/init.js";
 import { releaseAndroidCommand } from "./commands/release-android.js";
 import { releaseIOSCommand } from "./commands/release-ios.js";
+import { upgradeCommand } from "./commands/upgrade.js";
 import { logger } from "./utils/logger.js";
 
 
@@ -43,6 +44,11 @@ program
     .command("info")
     .description("Show project and system info")
     .action(infoCommand);
+
+program
+    .command("upgrade")
+    .description("Upgrade Flux Mobile CLI to the latest version")
+    .action(upgradeCommand);
 
 
 
