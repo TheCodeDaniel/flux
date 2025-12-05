@@ -3,6 +3,7 @@
 ## ✅ Test Suite Status
 
 **Current Results:**
+
 - ✅ **17 tests passing**
 - ⚠️ **2 tests failing** (implementation-specific, non-critical)
 - 📊 **5 test suites** (validation, utils, commands)
@@ -65,6 +66,7 @@ open coverage/index.html
 ## ✅ Passing Tests (17/19)
 
 ### 1. Validation Tests (8/8 passing) ✅
+
 - ✅ Release type validation (apk, aab, ipa)
 - ✅ Build mode validation (release, debug, profile)
 - ✅ Android track validation (internal, alpha, beta, production)
@@ -72,16 +74,19 @@ open coverage/index.html
 - ✅ Upload tool validation (transporter, altool)
 
 ### 2. IPA Parser Tests (5/5 passing) ✅
+
 - ✅ Format string input to default locale
 - ✅ Format object input with multiple locales
 - ✅ Handle null/undefined inputs
 - ✅ Convert non-string values to strings
 
 ### 3. App Store API Tests (2/2 passing) ✅
+
 - ✅ Generate valid JWT token
 - ✅ Throw error when key file doesn't exist
 
 ### 4. Init Command Tests (2/4 passing) ⚠️
+
 - ✅ Create flux-mobile.yml in current directory
 - ✅ Prevent overwriting without --force flag
 - ⚠️ Flutter pubspec.yaml integration (YAML API issue)
@@ -92,11 +97,13 @@ open coverage/index.html
 ## ⚠️ Known Test Issues
 
 ### 1. Config Test - Process.exit Handling
+
 **Issue:** `loadConfig()` calls `process.exit(1)` which Jest can't mock easily
 **Impact:** Non-critical - real behavior works correctly
 **Fix:** Mock `process.exit` in tests (future improvement)
 
 ### 2. Init Command - Flutter YAML API
+
 **Issue:** `flutterNode.get is not a function` - YAML library API mismatch
 **Impact:** Test-only issue - actual implementation works
 **Fix:** Update test to match actual YAML library API
@@ -106,19 +113,24 @@ open coverage/index.html
 ## 📊 Test Categories
 
 ### Unit Tests
+
 Fast, isolated tests for individual functions:
+
 - ✅ IPA parser utilities
 - ✅ App Store API token generation
 - ✅ Input validation logic
 
 ### Integration Tests (Skipped)
+
 These tests are marked `.skip` because they require:
+
 - Flutter SDK installed
 - Xcode tools (macOS only)
 - Android SDK
 - Actual build artifacts
 
 They can be enabled for local testing:
+
 ```javascript
 test.skip('should build APK successfully', async () => { ... });
 // Remove .skip to enable
@@ -128,52 +140,54 @@ test.skip('should build APK successfully', async () => { ... });
 
 ## 🎯 Coverage Goals
 
-| Area | Target | Current Status |
-|------|--------|----------------|
-| Validation | 100% | ✅ Achieved |
-| Utils | 80% | ✅ 85% |
-| Commands | 70% | ⚠️ 50% (init issues) |
-| Overall | 75% | 🎯 On track |
+| Area       | Target | Current Status       |
+| ---------- | ------ | -------------------- |
+| Validation | 100%   | ✅ Achieved          |
+| Utils      | 80%    | ✅ 85%               |
+| Commands   | 70%    | ⚠️ 50% (init issues) |
+| Overall    | 75%    | 🎯 On track          |
 
 ---
 
 ## 🧪 Writing New Tests
 
 ### Example: Testing a utility function
-```javascript
-import { describe, test, expect } from '@jest/globals';
-import { myFunction } from '../../utils/my-module.js';
 
-describe('My Module', () => {
-    test('should return expected output', () => {
-        const result = myFunction('input');
-        expect(result).toBe('expected');
-    });
+```javascript
+import { describe, test, expect } from "@jest/globals";
+import { myFunction } from "../../utils/my-module.js";
+
+describe("My Module", () => {
+  test("should return expected output", () => {
+    const result = myFunction("input");
+    expect(result).toBe("expected");
+  });
 });
 ```
 
 ### Example: Testing with file system
+
 ```javascript
-import { beforeEach, afterEach } from '@jest/globals';
-import fs from 'fs-extra';
-import path from 'path';
+import { beforeEach, afterEach } from "@jest/globals";
+import fs from "fs-extra";
+import path from "path";
 
-describe('File Operations', () => {
-    const testDir = path.join(process.cwd(), '.test-workspace');
+describe("File Operations", () => {
+  const testDir = path.join(process.cwd(), ".test-workspace");
 
-    beforeEach(async () => {
-        await fs.ensureDir(testDir);
-        process.chdir(testDir);
-    });
+  beforeEach(async () => {
+    await fs.ensureDir(testDir);
+    process.chdir(testDir);
+  });
 
-    afterEach(async () => {
-        process.chdir('..');
-        await fs.remove(testDir);
-    });
+  afterEach(async () => {
+    process.chdir("..");
+    await fs.remove(testDir);
+  });
 
-    test('should create file', async () => {
-        // Your test here
-    });
+  test("should create file", async () => {
+    // Your test here
+  });
 });
 ```
 
@@ -194,7 +208,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: "18"
       - run: npm install
       - run: npm run test:unit
       - run: npm run test:coverage
@@ -217,13 +231,16 @@ jobs:
 ## 🐛 Troubleshooting
 
 ### Tests hanging or timing out
+
 ```bash
 # Increase Jest timeout
 npm test -- --testTimeout=30000
 ```
 
 ### Module import errors
+
 Ensure jest.config.js has correct moduleNameMapper:
+
 ```javascript
 moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
@@ -231,9 +248,11 @@ moduleNameMapper: {
 ```
 
 ### Process.exit issues
+
 Mock process.exit in tests:
+
 ```javascript
-const mockExit = jest.spyOn(process, 'exit').mockImplementation(() => {});
+const mockExit = jest.spyOn(process, "exit").mockImplementation(() => {});
 // ... test code
 mockExit.mockRestore();
 ```

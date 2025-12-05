@@ -1,6 +1,6 @@
 # Flux Mobile CLI 📱🚀
 
-> ⚠️ **BETA RELEASE** - This package is currently in beta (v0.2.0-beta.2). While the core features are stable and production-ready, expect active development and potential breaking changes before v1.0.0. Please report any issues on [GitHub](https://github.com/TheCodeDaniel/flux-mobile-cli/issues).
+> ⚠️ **BETA RELEASE** - This package is currently in beta (v0.3.0-beta.3). While the core features are stable and production-ready, expect active development and potential breaking changes before v1.0.0. Please report any issues on [GitHub](https://github.com/TheCodeDaniel/flux-mobile-cli/issues).
 
 **Flux Mobile CLI** is a powerful, open-source local CI/CD CLI tool for mobile developers. Build, test, and deploy your Flutter and React Native apps to Google Play Store and Apple App Store—all from your local machine. No mandatory cloud CI, no vendor lock-in, just simple commands that work.
 
@@ -345,6 +345,7 @@ fluxm upgrade
 Automatically checks for updates and upgrades to the latest version from npm.
 
 **Note:** May require `sudo` on some systems:
+
 ```bash
 sudo npm install -g flux-mobile-cli@latest
 ```
@@ -445,11 +446,13 @@ fluxm release ios --track production --obfuscate
 ```
 
 **Benefits:**
+
 - Makes reverse engineering significantly harder
 - Protects your API keys and business logic
 - Generates debug symbol files for crash reporting
 
 **Debug symbols are saved to:**
+
 - Android: `build/app/outputs/symbols`
 - iOS: `build/ios/symbols`
 
