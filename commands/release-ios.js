@@ -70,10 +70,18 @@ export async function releaseIOSCommand(opts = {}) {
         }
 
         // Step 1: Build IPA
-        spinner.start(chalk.blue("Building iOS IPA (release mode with obfuscation)..."));
+        const buildMessage = opts.obfuscate
+            ? "Building iOS IPA (release mode with obfuscation)..."
+            : "Building iOS IPA (release mode)...";
+        spinner.start(chalk.blue(buildMessage));
 
-        // Build command arguments - obfuscation enabled by default for security
-        const buildArgs = ["build", "ipa", "--release", "--obfuscate", "--split-debug-info=build/ios/symbols"];
+        // Build command arguments
+        const buildArgs = ["build", "ipa", "--release"];
+
+        // Add obfuscation if requested
+        if (opts.obfuscate) {
+            buildArgs.push("--obfuscate", "--split-debug-info=build/ios/symbols");
+        }
 
         // Add flavor if specified
         if (opts.flavor) {
@@ -263,7 +271,6 @@ function runFlutterBuild(args, spinner, verbose) {
     return new Promise((resolve) => {
         const flutter = spawn("flutter", args, {
             cwd: process.cwd(),
-            shell: true,
         });
 
         let stdout = "";

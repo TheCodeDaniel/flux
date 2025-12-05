@@ -62,6 +62,7 @@ program
     .option("--notes <text>", "Release notes (string or JSON object)")
     .option("--env-file <path>", "Path to .env file for --dart-define-from-file")
     .option("--define <value...>", "Extra --dart-define values")
+    .option("--obfuscate", "Obfuscate Dart code for increased security", false)
     .option("--verbose", "Enable verbose build output", false)
     .action(async (platform, opts) => {
         // Validate platform
@@ -95,6 +96,7 @@ program
                 notes: parseNotesOption(opts.notes),
                 envFile: opts.envFile,
                 define: opts.define,
+                obfuscate: opts.obfuscate,
                 verbose: opts.verbose,
             });
         } else if (normalizedPlatform === "ios") {
@@ -104,6 +106,7 @@ program
                 notes: parseNotesOption(opts.notes),
                 envFile: opts.envFile,
                 define: opts.define,
+                obfuscate: opts.obfuscate,
                 verbose: opts.verbose,
             });
         }

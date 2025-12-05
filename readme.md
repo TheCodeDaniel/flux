@@ -85,7 +85,7 @@ Flux Mobile CLI solves these problems:
 ### Android
 
 - ✅ **Unified build + deploy workflow** (one command does it all)
-- ✅ **Automatic code obfuscation** (security by default)
+- ✅ **Optional code obfuscation** (use --obfuscate flag)
 - ✅ Build AAB with flavors
 - ✅ Deploy to Google Play (internal/alpha/beta/production)
 - ✅ Interactive deployment confirmation
@@ -96,7 +96,7 @@ Flux Mobile CLI solves these problems:
 ### iOS (macOS only)
 
 - ✅ **Unified build + deploy workflow** (one command does it all)
-- ✅ **Automatic code obfuscation** (security by default)
+- ✅ **Optional code obfuscation** (use --obfuscate flag)
 - ✅ Build IPA with flavors
 - ✅ Upload to App Store Connect
 - ✅ Automatic TestFlight submission
@@ -129,7 +129,7 @@ Flux Mobile CLI solves these problems:
 - Clean build artifacts with `fluxm clean`
 - **Self-update command**: `fluxm upgrade` to get latest version
 - **Unified release workflow**: Build + Deploy in one command
-- **Automatic code obfuscation**: All builds are obfuscated by default for security
+- **Optional code obfuscation**: Use `--obfuscate` flag for increased security
 - Build Android (AAB) and iOS (IPA) apps
 - Deploy to Google Play (all tracks)
 - Deploy to App Store Connect (TestFlight or Production)
@@ -372,6 +372,7 @@ fluxm release <platform> --track <track> [options]
 - `--notes <text>` — Release notes (string or JSON for multi-locale)
 - `--env-file <path>` — Environment file for `--dart-define-from-file`
 - `--define <value...>` — Additional `--dart-define` values
+- `--obfuscate` — Obfuscate Dart code for increased security (optional)
 - `--verbose` — Show verbose build output
 
 **Workflow:**
@@ -389,26 +390,26 @@ fluxm release <platform> --track <track> [options]
 # Android - Build AAB + Deploy to internal track
 fluxm release android --track internal --notes "First release!"
 
-# Android - Production with flavor
-fluxm release android --track production --flavor prod --env-file .env.prod --notes "v1.0.0"
+# Android - Production with flavor and obfuscation
+fluxm release android --track production --flavor prod --env-file .env.prod --obfuscate --notes "v1.0.0"
 
 # Android - Multi-language notes
 fluxm release android --track beta --notes '{"en-US":"English","es-ES":"Español"}'
 
-# iOS - Build IPA + Deploy to TestFlight
-fluxm release ios --track testflight --notes "Beta build"
+# iOS - Build IPA + Deploy to TestFlight with obfuscation
+fluxm release ios --track testflight --obfuscate --notes "Beta build"
 
 # iOS - Production with full automation (auto-submits for review!)
-fluxm release ios --track production --flavor prod --notes "Bug fixes and improvements"
+fluxm release ios --track production --flavor prod --obfuscate --notes "Bug fixes and improvements"
 
-# iOS - With environment variables
-fluxm release ios --track production --env-file .env.prod --define API_KEY=xyz --verbose
+# iOS - With environment variables and obfuscation
+fluxm release ios --track production --env-file .env.prod --define API_KEY=xyz --obfuscate --verbose
 ```
 
 **Android Workflow:**
 
-- Runs `flutter build appbundle --release` with **automatic code obfuscation**
-- Generates debug symbols at `build/app/outputs/symbols`
+- Runs `flutter build appbundle --release`
+- Optionally obfuscates code with `--obfuscate` flag
 - Parses AAB path from build output
 - Prompts for deployment confirmation
 - Uploads to Google Play via Android Publisher API
@@ -417,8 +418,8 @@ fluxm release ios --track production --env-file .env.prod --define API_KEY=xyz -
 
 **iOS Workflow (TestFlight):**
 
-- Runs `flutter build ipa --release` with **automatic code obfuscation**
-- Generates debug symbols at `build/ios/symbols`
+- Runs `flutter build ipa --release`
+- Optionally obfuscates code with `--obfuscate` flag
 - Parses IPA path from build output
 - Prompts for deployment confirmation
 - Uploads to App Store Connect via Transporter/altool
@@ -434,19 +435,27 @@ Everything from TestFlight workflow, PLUS:
 - Sets release notes
 - **Automatically submits for App Store review**
 
-### 🔒 **Security: Built-in Code Obfuscation**
+### 🔒 **Code Obfuscation (Optional)**
 
-All builds are **automatically obfuscated** for security. This:
+Use the `--obfuscate` flag to obfuscate your Dart code for increased security:
+
+```bash
+fluxm release android --track production --obfuscate
+fluxm release ios --track production --obfuscate
+```
+
+**Benefits:**
 - Makes reverse engineering significantly harder
 - Protects your API keys and business logic
 - Generates debug symbol files for crash reporting
-- **Cannot be disabled** - security by default!
 
-Debug symbols are saved to:
+**Debug symbols are saved to:**
 - Android: `build/app/outputs/symbols`
 - iOS: `build/ios/symbols`
 
 Upload these to Firebase Crashlytics or your crash reporting tool to decode stack traces.
+
+**Note:** Obfuscation works exactly like Flutter's native `--obfuscate` flag - same syntax, zero learning curve!
 
 ---
 
