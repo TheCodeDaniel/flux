@@ -118,24 +118,23 @@ export async function releaseIOSCommand(opts = {}) {
 
         // Flutter outputs the build path in format:
         // "Built IPA to /path/to/build/ios/ipa/app.ipa"
-        const buildPathRegex = /Built.*?IPA.*?to\s+(.+\.ipa)/i;
+        const buildPathRegex = /Built.*?(?:IPA|\.ipa).*?(?:to|at)\s+(.+\.ipa)/i;
         const match = buildOutput.match(buildPathRegex);
 
         if (match && match[1]) {
             ipaPath = path.resolve(process.cwd(), match[1].trim());
-        } else {
-            // Fallback: Try common paths
-            const possiblePaths = [
-                opts.flavor
-                    ? `build/ios/ipa/${opts.flavor}/app.ipa`
-                    : "build/ios/ipa/app.ipa"
-            ];
+        }
 
-            for (const p of possiblePaths) {
-                const fullPath = path.resolve(process.cwd(), p);
-                if (fs.existsSync(fullPath)) {
-                    ipaPath = fullPath;
-                    break;
+        // If regex failed, search for any .ipa file in build/ios/ipa/
+        if (!ipaPath || !fs.existsSync(ipaPath)) {
+            const ipaDir = path.resolve(process.cwd(), "build/ios/ipa");
+
+            if (fs.existsSync(ipaDir)) {
+                const files = fs.readdirSync(ipaDir);
+                const ipaFile = files.find(f => f.endsWith('.ipa'));
+
+                if (ipaFile) {
+                    ipaPath = path.join(ipaDir, ipaFile);
                 }
             }
         }
@@ -143,6 +142,15 @@ export async function releaseIOSCommand(opts = {}) {
         if (!ipaPath || !fs.existsSync(ipaPath)) {
             spinner.fail(chalk.red("IPA file not found after build!"));
             logger.error("Could not locate the built IPA file.");
+            logger.info("Expected location: build/ios/ipa/*.ipa");
+
+            // Show what we actually have
+            const ipaDir = path.resolve(process.cwd(), "build/ios/ipa");
+            if (fs.existsSync(ipaDir)) {
+                const files = fs.readdirSync(ipaDir);
+                logger.info(`Files found in build/ios/ipa/: ${files.join(', ')}`);
+            }
+
             process.exit(1);
         }
 
