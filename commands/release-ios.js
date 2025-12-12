@@ -315,22 +315,39 @@ export async function releaseIOSCommand(opts = {}) {
             console.log(chalk.gray(`📝 Deployment logged at .flux-mobile/deployments.json`));
 
         } catch (apiError) {
-            spinner.fail(chalk.red("Failed to assign build to track!"));
+            spinner.fail(chalk.red(`Failed to ${opts.track === 'testflight' ? 'submit to TestFlight' : 'submit to App Store'}!`));
             console.log();
-            logger.error("Upload succeeded, but failed to assign build via App Store Connect API:");
+            logger.error("Upload succeeded, but failed to process via App Store Connect API:");
             logger.error(apiError.message);
             console.log();
             logger.info(chalk.yellow("⚠️  Your IPA was uploaded successfully to App Store Connect."));
-            logger.info(chalk.yellow("⚠️  You can manually assign it to TestFlight in App Store Connect."));
-            logger.info(chalk.yellow("⚠️  Visit: https://appstoreconnect.apple.com"));
-            console.log();
-            logger.info("Common issues and solutions:");
-            logger.info("  1. Export Compliance: Add ITSAppUsesNonExemptEncryption to ios/Runner/Info.plist");
-            logger.info("  2. Build Processing: Build may still be processing. Wait 5-10 minutes and try again");
-            logger.info("  3. Another Build in Review: Only one build can be in Beta Review at a time");
-            logger.info("  4. Beta Contract: Ensure you've signed the beta testing agreement in App Store Connect");
-            logger.info("  5. Beta Information: Fill out Test Information (description, email) in TestFlight settings");
-            logger.info("  6. API Permissions: Ensure your API key has 'App Manager' or 'Admin' role");
+
+            if (opts.track === 'testflight') {
+                logger.info(chalk.yellow("⚠️  You can manually assign it to TestFlight in App Store Connect."));
+                logger.info(chalk.yellow("⚠️  Visit: https://appstoreconnect.apple.com/apps → Your App → TestFlight"));
+                console.log();
+                logger.info("Common issues for TestFlight submissions:");
+                logger.info("  1. Export Compliance: Add ITSAppUsesNonExemptEncryption to ios/Runner/Info.plist");
+                logger.info("  2. Build Processing: Build may still be processing. Wait 5-10 minutes and try again");
+                logger.info("  3. Another Build in Review: Only one build can be in Beta Review at a time");
+                logger.info("  4. Beta Contract: Ensure you've signed the beta testing agreement in App Store Connect");
+                logger.info("  5. Beta Information: Fill out Test Information (description, email) in TestFlight settings");
+                logger.info("  6. API Permissions: Ensure your API key has 'App Manager' or 'Admin' role");
+            } else {
+                logger.info(chalk.yellow("⚠️  You can manually submit it for App Store review in App Store Connect."));
+                logger.info(chalk.yellow("⚠️  Visit: https://appstoreconnect.apple.com/apps → Your App → App Store"));
+                console.log();
+                logger.info("Common issues for App Store (production) submissions:");
+                logger.info("  1. App Information: Complete app description, keywords, categories");
+                logger.info("  2. Screenshots: Upload all required screenshots for all device sizes");
+                logger.info("  3. Privacy Policy: Add privacy policy URL if required");
+                logger.info("  4. App Review Information: Fill out contact info and demo account (if needed)");
+                logger.info("  5. Export Compliance: Add ITSAppUsesNonExemptEncryption to ios/Runner/Info.plist");
+                logger.info("  6. Content Rights: Ensure you have rights to all content in your app");
+                logger.info("  7. Version Information: Ensure version number and copyright are correct");
+                logger.info("  8. API Permissions: Ensure your API key has 'App Manager' or 'Admin' role");
+            }
+
             logger.info("");
             logger.info("For detailed error, run with FLUX_DEBUG=1 environment variable");
             process.exit(1);
