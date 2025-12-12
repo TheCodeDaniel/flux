@@ -180,15 +180,60 @@ export async function releaseIOSCommand(opts = {}) {
         // Step 4a: Upload IPA using Transporter or altool
         spinner.text = chalk.blue("Uploading IPA to App Store Connect...");
 
+        // Both tools look for .p8 in specific directories
+        // Copy .p8 to ~/.appstoreconnect/private_keys/ temporarily
+        const os = await import('os');
+        const tempKeyDir = path.join(os.homedir(), '.appstoreconnect', 'private_keys');
+        const tempKeyPath = path.join(tempKeyDir, path.basename(apiKeyPath));
+
+        // Create directory if it doesn't exist
+        fs.ensureDirSync(tempKeyDir);
+
+        // Verify source file exists
+        if (!fs.existsSync(apiKeyPath)) {
+            spinner.fail(chalk.red("API key file not found!"));
+            logger.error(`Could not find .p8 file at: ${apiKeyPath}`);
+            process.exit(1);
+        }
+
+        // Copy .p8 file to temp location
+        try {
+            fs.copyFileSync(apiKeyPath, tempKeyPath);
+
+            // Verify copy succeeded
+            if (!fs.existsSync(tempKeyPath)) {
+                throw new Error(`Failed to copy key to ${tempKeyPath}`);
+            }
+
+            if (opts.verbose) {
+                logger.info(`Copied API key to: ${tempKeyPath}`);
+            }
+        } catch (err) {
+            spinner.fail(chalk.red("Failed to copy API key!"));
+            logger.error(err.message);
+            process.exit(1);
+        }
+
         const uploadCmd = uploadTool === 'transporter'
-            ? `xcrun iTMSTransporter -m upload -f "${ipaPath}" -apiKey "${apiKeyId}" -apiIssuer "${issuerId}" -t Aspera`
+            ? `xcrun iTMSTransporter -m upload -f "${ipaPath}" -k "${tempKeyPath}" -apiKey "${apiKeyId}" -apiIssuer "${issuerId}" -t Aspera`
             : `xcrun altool --upload-app --type ios --file "${ipaPath}" --apiKey "${apiKeyId}" --apiIssuer "${issuerId}"`;
 
         try {
             execSync(uploadCmd, { stdio: opts.verbose ? "inherit" : "pipe" });
+
+            // Clean up temp key file after successful upload
+            if (fs.existsSync(tempKeyPath)) {
+                fs.unlinkSync(tempKeyPath);
+            }
         } catch (error) {
             spinner.fail(chalk.red("Upload failed!"));
             console.error(error.message);
+
+            // Clean up temp key file on error
+            if (fs.existsSync(tempKeyPath)) {
+                fs.unlinkSync(tempKeyPath);
+            }
+
             process.exit(1);
         }
 
