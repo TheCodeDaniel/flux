@@ -182,9 +182,10 @@ export async function releaseIOSCommand(opts = {}) {
 
         // Both tools look for .p8 in specific directories
         // Copy .p8 to ~/.appstoreconnect/private_keys/ temporarily
+        // IMPORTANT: altool requires the file to be named AuthKey_<api_key_id>.p8
         const os = await import('os');
         const tempKeyDir = path.join(os.homedir(), '.appstoreconnect', 'private_keys');
-        const tempKeyPath = path.join(tempKeyDir, path.basename(apiKeyPath));
+        const tempKeyPath = path.join(tempKeyDir, `AuthKey_${apiKeyId}.p8`);
 
         // Create directory if it doesn't exist
         fs.ensureDirSync(tempKeyDir);
@@ -225,6 +226,9 @@ export async function releaseIOSCommand(opts = {}) {
             if (fs.existsSync(tempKeyPath)) {
                 fs.unlinkSync(tempKeyPath);
             }
+
+            spinner.succeed(chalk.green("✅ IPA uploaded successfully to App Store Connect!"));
+            console.log();
         } catch (error) {
             spinner.fail(chalk.red("Upload failed!"));
             console.error(error.message);
@@ -237,78 +241,100 @@ export async function releaseIOSCommand(opts = {}) {
             process.exit(1);
         }
 
-        // Step 4b: Generate API token
-        const token = generateToken(apiKeyId, issuerId, apiKeyPath);
+        // Step 4b: Process build and assign to track
+        // Wrap API calls in separate try/catch to provide better error messages
+        try {
+            spinner.start(chalk.blue("Processing build and assigning to track..."));
 
-        // Step 4c: Get app and build IDs
-        spinner.text = chalk.blue("Finding app and build...");
+            // Generate API token
+            const token = generateToken(apiKeyId, issuerId, apiKeyPath);
 
-        const appId = await getAppId(token, bundleId);
-        if (!appId) {
-            spinner.fail(chalk.red("App not found in App Store Connect!"));
-            logger.error(`No app found with bundle ID: ${bundleId}`);
-            process.exit(1);
-        }
+            // Get app and build IDs
+            spinner.text = chalk.blue("Finding app and build...");
 
-        // Wait a bit for the build to process
-        spinner.text = chalk.blue("Waiting for build to process...");
-        await sleep(5000);
-
-        const buildId = await getLatestBuild(token, appId);
-        if (!buildId) {
-            spinner.fail(chalk.red("Build not found!"));
-            logger.error("Could not find the uploaded build. It may still be processing.");
-            logger.info("Try running the deploy command again in a few minutes.");
-            process.exit(1);
-        }
-
-        // Step 4d: Deploy based on track
-        if (opts.track === 'testflight') {
-            // Submit to TestFlight
-            spinner.text = chalk.blue("Submitting to TestFlight...");
-            await submitToTestFlight(token, buildId);
-
-            spinner.succeed(chalk.green(`✅ Deployed successfully to TestFlight!`));
-        } else {
-            // Production workflow
-            spinner.text = chalk.blue("Processing production submission...");
-
-            // Extract version info from IPA
-            const ipaMetadata = await extractIPAMetadata(ipaPath);
-
-            // Get or create App Store version
-            const versionInfo = await getOrCreateAppStoreVersion(
-                token,
-                appId,
-                ipaMetadata.versionString
-            );
-
-            // Assign build to version
-            await assignBuildToVersion(token, versionInfo.versionId, buildId);
-
-            // Set release notes if provided
-            if (opts.notes) {
-                const formattedNotes = formatReleaseNotes(opts.notes);
-                await setReleaseNotes(token, versionInfo.versionId, formattedNotes);
+            const appId = await getAppId(token, bundleId);
+            if (!appId) {
+                throw new Error(`App not found in App Store Connect with bundle ID: ${bundleId}`);
             }
 
-            // Submit for review
-            spinner.text = chalk.blue("Submitting for App Store review...");
-            await submitForReview(token, versionInfo.versionId);
+            // Wait for the build to process (Apple needs time even after upload completes)
+            spinner.text = chalk.blue("Waiting for build to process (15 seconds)...");
+            await sleep(15000);
 
-            spinner.succeed(chalk.green(`✅ Deployed successfully and submitted for App Store review!`));
+            const buildId = await getLatestBuild(token, appId);
+            if (!buildId) {
+                throw new Error("Build not found. It may still be processing. Check App Store Connect and try again in a few minutes.");
+            }
+
+            // Deploy based on track
+            if (opts.track === 'testflight') {
+                // Submit to TestFlight
+                spinner.text = chalk.blue("Submitting to TestFlight...");
+                await submitToTestFlight(token, buildId);
+
+                spinner.succeed(chalk.green(`✅ Build assigned to TestFlight successfully!`));
+            } else {
+                // Production workflow
+                spinner.text = chalk.blue("Processing production submission...");
+
+                // Extract version info from IPA
+                const ipaMetadata = await extractIPAMetadata(ipaPath);
+
+                // Get or create App Store version
+                const versionInfo = await getOrCreateAppStoreVersion(
+                    token,
+                    appId,
+                    ipaMetadata.versionString
+                );
+
+                // Assign build to version
+                await assignBuildToVersion(token, versionInfo.versionId, buildId);
+
+                // Set release notes if provided
+                if (opts.notes) {
+                    const formattedNotes = formatReleaseNotes(opts.notes);
+                    await setReleaseNotes(token, versionInfo.versionId, formattedNotes);
+                }
+
+                // Submit for review
+                spinner.text = chalk.blue("Submitting for App Store review...");
+                await submitForReview(token, versionInfo.versionId);
+
+                spinner.succeed(chalk.green(`✅ Build submitted for App Store review successfully!`));
+            }
+
+            // Log deployment
+            await logDeployment({
+                platform: "ios",
+                track: opts.track,
+                artifact: ipaPath,
+                notes: opts.notes || "No release notes provided",
+                timestamp: new Date().toISOString(),
+            });
+
+            console.log(chalk.gray(`📝 Deployment logged at .flux-mobile/deployments.json`));
+
+        } catch (apiError) {
+            spinner.fail(chalk.red("Failed to assign build to track!"));
+            console.log();
+            logger.error("Upload succeeded, but failed to assign build via App Store Connect API:");
+            logger.error(apiError.message);
+            console.log();
+            logger.info(chalk.yellow("⚠️  Your IPA was uploaded successfully to App Store Connect."));
+            logger.info(chalk.yellow("⚠️  You can manually assign it to TestFlight in App Store Connect."));
+            logger.info(chalk.yellow("⚠️  Visit: https://appstoreconnect.apple.com"));
+            console.log();
+            logger.info("Common issues and solutions:");
+            logger.info("  1. Export Compliance: Add ITSAppUsesNonExemptEncryption to ios/Runner/Info.plist");
+            logger.info("  2. Build Processing: Build may still be processing. Wait 5-10 minutes and try again");
+            logger.info("  3. Another Build in Review: Only one build can be in Beta Review at a time");
+            logger.info("  4. Beta Contract: Ensure you've signed the beta testing agreement in App Store Connect");
+            logger.info("  5. Beta Information: Fill out Test Information (description, email) in TestFlight settings");
+            logger.info("  6. API Permissions: Ensure your API key has 'App Manager' or 'Admin' role");
+            logger.info("");
+            logger.info("For detailed error, run with FLUX_DEBUG=1 environment variable");
+            process.exit(1);
         }
-
-        // Log deployment
-        await logDeployment({
-            platform: "ios",
-            track: opts.track,
-            artifact: ipaPath,
-            notes: opts.notes || "No release notes provided",
-            timestamp: new Date().toISOString(),
-        });
-
-        console.log(chalk.gray(`📝 Deployment logged at .flux-mobile/deployments.json`));
 
     } catch (error) {
         spinner.fail(chalk.red("Release failed!"));

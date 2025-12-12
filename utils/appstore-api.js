@@ -60,7 +60,21 @@ async function makeRequest(token, method, endpoint, body = null) {
                 } else {
                     try {
                         const error = JSON.parse(data);
-                        reject(new Error(error.errors?.[0]?.detail || `API Error: ${res.statusCode}`));
+                        const errorDetail = error.errors?.[0]?.detail || `API Error: ${res.statusCode}`;
+                        const errorTitle = error.errors?.[0]?.title || '';
+                        const errorCode = error.errors?.[0]?.code || '';
+
+                        // Build detailed error message
+                        let fullError = `${errorDetail}`;
+                        if (errorTitle) fullError += ` (${errorTitle})`;
+                        if (errorCode) fullError += ` [${errorCode}]`;
+
+                        // Log full response for debugging
+                        if (process.env.FLUX_DEBUG) {
+                            console.error('Full API Error Response:', JSON.stringify(error, null, 2));
+                        }
+
+                        reject(new Error(fullError));
                     } catch (e) {
                         reject(new Error(`API Error: ${res.statusCode} - ${data}`));
                     }
