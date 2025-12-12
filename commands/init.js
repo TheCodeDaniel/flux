@@ -159,7 +159,8 @@ async function updateGitignore(projectDir) {
 
     const content = await fs.readFile(gitignorePath, 'utf8');
     const lines = content.split('\n').map(line => line.trim());
-    const entriesToAdd = ['flux-mobile.yml', 'dist/'];
+    // const entriesToAdd = ['flux-mobile.yml', 'dist/'];
+    const entriesToAdd = ['flux-mobile.yml'];
 
     const newEntries = entriesToAdd.filter(entry => !lines.includes(entry));
 

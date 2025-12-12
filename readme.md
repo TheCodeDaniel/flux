@@ -1,6 +1,6 @@
 # Flux Mobile CLI 📱🚀
 
-> ⚠️ **BETA RELEASE** - This package is currently in beta (v0.3.0-beta.3). While the core features are stable and production-ready, expect active development and potential breaking changes before v1.0.0. Please report any issues on [GitHub](https://github.com/TheCodeDaniel/flux-mobile-cli/issues).
+> ⚠️ **BETA RELEASE** - This package is currently in beta (v0.4.0-beta.4). While the core features are stable and production-ready, expect active development and potential breaking changes before v1.0.0. Please report any issues on [GitHub](https://github.com/TheCodeDaniel/flux-mobile-cli/issues).
 
 **Flux Mobile CLI** is a powerful, open-source local CI/CD CLI tool for mobile developers. Build, test, and deploy your Flutter and React Native apps to Google Play Store and Apple App Store—all from your local machine. No mandatory cloud CI, no vendor lock-in, just simple commands that work.
 

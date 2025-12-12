@@ -118,24 +118,23 @@ export async function releaseIOSCommand(opts = {}) {
 
         // Flutter outputs the build path in format:
         // "Built IPA to /path/to/build/ios/ipa/app.ipa"
-        const buildPathRegex = /Built.*?IPA.*?to\s+(.+\.ipa)/i;
+        const buildPathRegex = /Built.*?(?:IPA|\.ipa).*?(?:to|at)\s+(.+\.ipa)/i;
         const match = buildOutput.match(buildPathRegex);
 
         if (match && match[1]) {
             ipaPath = path.resolve(process.cwd(), match[1].trim());
-        } else {
-            // Fallback: Try common paths
-            const possiblePaths = [
-                opts.flavor
-                    ? `build/ios/ipa/${opts.flavor}/app.ipa`
-                    : "build/ios/ipa/app.ipa"
-            ];
+        }
 
-            for (const p of possiblePaths) {
-                const fullPath = path.resolve(process.cwd(), p);
-                if (fs.existsSync(fullPath)) {
-                    ipaPath = fullPath;
-                    break;
+        // If regex failed, search for any .ipa file in build/ios/ipa/
+        if (!ipaPath || !fs.existsSync(ipaPath)) {
+            const ipaDir = path.resolve(process.cwd(), "build/ios/ipa");
+
+            if (fs.existsSync(ipaDir)) {
+                const files = fs.readdirSync(ipaDir);
+                const ipaFile = files.find(f => f.endsWith('.ipa'));
+
+                if (ipaFile) {
+                    ipaPath = path.join(ipaDir, ipaFile);
                 }
             }
         }
@@ -143,6 +142,15 @@ export async function releaseIOSCommand(opts = {}) {
         if (!ipaPath || !fs.existsSync(ipaPath)) {
             spinner.fail(chalk.red("IPA file not found after build!"));
             logger.error("Could not locate the built IPA file.");
+            logger.info("Expected location: build/ios/ipa/*.ipa");
+
+            // Show what we actually have
+            const ipaDir = path.resolve(process.cwd(), "build/ios/ipa");
+            if (fs.existsSync(ipaDir)) {
+                const files = fs.readdirSync(ipaDir);
+                logger.info(`Files found in build/ios/ipa/: ${files.join(', ')}`);
+            }
+
             process.exit(1);
         }
 
@@ -172,90 +180,178 @@ export async function releaseIOSCommand(opts = {}) {
         // Step 4a: Upload IPA using Transporter or altool
         spinner.text = chalk.blue("Uploading IPA to App Store Connect...");
 
+        // Both altool and iTMSTransporter automatically search for .p8 files in specific directories
+        // Copy .p8 to ~/.appstoreconnect/private_keys/ with the correct naming convention
+        // IMPORTANT: File must be named AuthKey_<api_key_id>.p8 for both tools to find it
+        const os = await import('os');
+        const tempKeyDir = path.join(os.homedir(), '.appstoreconnect', 'private_keys');
+        const tempKeyPath = path.join(tempKeyDir, `AuthKey_${apiKeyId}.p8`);
+
+        // Create directory if it doesn't exist
+        fs.ensureDirSync(tempKeyDir);
+
+        // Verify source file exists
+        if (!fs.existsSync(apiKeyPath)) {
+            spinner.fail(chalk.red("API key file not found!"));
+            logger.error(`Could not find .p8 file at: ${apiKeyPath}`);
+            process.exit(1);
+        }
+
+        // Copy .p8 file to temp location
+        try {
+            fs.copyFileSync(apiKeyPath, tempKeyPath);
+
+            // Verify copy succeeded
+            if (!fs.existsSync(tempKeyPath)) {
+                throw new Error(`Failed to copy key to ${tempKeyPath}`);
+            }
+
+            if (opts.verbose) {
+                logger.info(`Copied API key to: ${tempKeyPath}`);
+            }
+        } catch (err) {
+            spinner.fail(chalk.red("Failed to copy API key!"));
+            logger.error(err.message);
+            process.exit(1);
+        }
+
         const uploadCmd = uploadTool === 'transporter'
-            ? `xcrun iTMSTransporter -m upload -f "${ipaPath}" -apiKey "${apiKeyId}" -apiIssuer "${issuerId}" -t Aspera`
+            ? `xcrun iTMSTransporter -m upload -assetFile "${ipaPath}" -apiKey "${apiKeyId}" -apiIssuer "${issuerId}"`
             : `xcrun altool --upload-app --type ios --file "${ipaPath}" --apiKey "${apiKeyId}" --apiIssuer "${issuerId}"`;
 
         try {
             execSync(uploadCmd, { stdio: opts.verbose ? "inherit" : "pipe" });
+
+            // Clean up temp key file after successful upload
+            if (fs.existsSync(tempKeyPath)) {
+                fs.unlinkSync(tempKeyPath);
+            }
+
+            spinner.succeed(chalk.green("✅ IPA uploaded successfully to App Store Connect!"));
+            console.log();
         } catch (error) {
             spinner.fail(chalk.red("Upload failed!"));
             console.error(error.message);
-            process.exit(1);
-        }
 
-        // Step 4b: Generate API token
-        const token = generateToken(apiKeyId, issuerId, apiKeyPath);
-
-        // Step 4c: Get app and build IDs
-        spinner.text = chalk.blue("Finding app and build...");
-
-        const appId = await getAppId(token, bundleId);
-        if (!appId) {
-            spinner.fail(chalk.red("App not found in App Store Connect!"));
-            logger.error(`No app found with bundle ID: ${bundleId}`);
-            process.exit(1);
-        }
-
-        // Wait a bit for the build to process
-        spinner.text = chalk.blue("Waiting for build to process...");
-        await sleep(5000);
-
-        const buildId = await getLatestBuild(token, appId);
-        if (!buildId) {
-            spinner.fail(chalk.red("Build not found!"));
-            logger.error("Could not find the uploaded build. It may still be processing.");
-            logger.info("Try running the deploy command again in a few minutes.");
-            process.exit(1);
-        }
-
-        // Step 4d: Deploy based on track
-        if (opts.track === 'testflight') {
-            // Submit to TestFlight
-            spinner.text = chalk.blue("Submitting to TestFlight...");
-            await submitToTestFlight(token, buildId);
-
-            spinner.succeed(chalk.green(`✅ Deployed successfully to TestFlight!`));
-        } else {
-            // Production workflow
-            spinner.text = chalk.blue("Processing production submission...");
-
-            // Extract version info from IPA
-            const ipaMetadata = await extractIPAMetadata(ipaPath);
-
-            // Get or create App Store version
-            const versionInfo = await getOrCreateAppStoreVersion(
-                token,
-                appId,
-                ipaMetadata.versionString
-            );
-
-            // Assign build to version
-            await assignBuildToVersion(token, versionInfo.versionId, buildId);
-
-            // Set release notes if provided
-            if (opts.notes) {
-                const formattedNotes = formatReleaseNotes(opts.notes);
-                await setReleaseNotes(token, versionInfo.versionId, formattedNotes);
+            // Clean up temp key file on error
+            if (fs.existsSync(tempKeyPath)) {
+                fs.unlinkSync(tempKeyPath);
             }
 
-            // Submit for review
-            spinner.text = chalk.blue("Submitting for App Store review...");
-            await submitForReview(token, versionInfo.versionId);
-
-            spinner.succeed(chalk.green(`✅ Deployed successfully and submitted for App Store review!`));
+            process.exit(1);
         }
 
-        // Log deployment
-        await logDeployment({
-            platform: "ios",
-            track: opts.track,
-            artifact: ipaPath,
-            notes: opts.notes || "No release notes provided",
-            timestamp: new Date().toISOString(),
-        });
+        // Step 4b: Process build and assign to track
+        // Wrap API calls in separate try/catch to provide better error messages
+        try {
+            spinner.start(chalk.blue("Processing build and assigning to track..."));
 
-        console.log(chalk.gray(`📝 Deployment logged at .flux-mobile/deployments.json`));
+            // Generate API token
+            const token = generateToken(apiKeyId, issuerId, apiKeyPath);
+
+            // Get app and build IDs
+            spinner.text = chalk.blue("Finding app and build...");
+
+            const appId = await getAppId(token, bundleId);
+            if (!appId) {
+                throw new Error(`App not found in App Store Connect with bundle ID: ${bundleId}`);
+            }
+
+            // Wait for the build to process (Apple needs time even after upload completes)
+            spinner.text = chalk.blue("Waiting for build to process (15 seconds)...");
+            await sleep(15000);
+
+            const buildId = await getLatestBuild(token, appId);
+            if (!buildId) {
+                throw new Error("Build not found. It may still be processing. Check App Store Connect and try again in a few minutes.");
+            }
+
+            // Deploy based on track
+            if (opts.track === 'testflight') {
+                // Submit to TestFlight
+                spinner.text = chalk.blue("Submitting to TestFlight...");
+                await submitToTestFlight(token, buildId);
+
+                spinner.succeed(chalk.green(`✅ Build assigned to TestFlight successfully!`));
+            } else {
+                // Production workflow
+                spinner.text = chalk.blue("Processing production submission...");
+
+                // Extract version info from IPA
+                const ipaMetadata = await extractIPAMetadata(ipaPath);
+
+                // Get or create App Store version
+                const versionInfo = await getOrCreateAppStoreVersion(
+                    token,
+                    appId,
+                    ipaMetadata.versionString
+                );
+
+                // Assign build to version
+                await assignBuildToVersion(token, versionInfo.versionId, buildId);
+
+                // Set release notes if provided
+                if (opts.notes) {
+                    const formattedNotes = formatReleaseNotes(opts.notes);
+                    await setReleaseNotes(token, versionInfo.versionId, formattedNotes);
+                }
+
+                // Submit for review
+                spinner.text = chalk.blue("Submitting for App Store review...");
+                await submitForReview(token, versionInfo.versionId);
+
+                spinner.succeed(chalk.green(`✅ Build submitted for App Store review successfully!`));
+            }
+
+            // Log deployment
+            await logDeployment({
+                platform: "ios",
+                track: opts.track,
+                artifact: ipaPath,
+                notes: opts.notes || "No release notes provided",
+                timestamp: new Date().toISOString(),
+            });
+
+            console.log(chalk.gray(`📝 Deployment logged at .flux-mobile/deployments.json`));
+
+        } catch (apiError) {
+            spinner.fail(chalk.red(`Failed to ${opts.track === 'testflight' ? 'submit to TestFlight' : 'submit to App Store'}!`));
+            console.log();
+            logger.error("Upload succeeded, but failed to process via App Store Connect API:");
+            logger.error(apiError.message);
+            console.log();
+            logger.info(chalk.yellow("⚠️  Your IPA was uploaded successfully to App Store Connect."));
+
+            if (opts.track === 'testflight') {
+                logger.info(chalk.yellow("⚠️  You can manually assign it to TestFlight in App Store Connect."));
+                logger.info(chalk.yellow("⚠️  Visit: https://appstoreconnect.apple.com/apps → Your App → TestFlight"));
+                console.log();
+                logger.info("Common issues for TestFlight submissions:");
+                logger.info("  1. Export Compliance: Add ITSAppUsesNonExemptEncryption to ios/Runner/Info.plist");
+                logger.info("  2. Build Processing: Build may still be processing. Wait 5-10 minutes and try again");
+                logger.info("  3. Another Build in Review: Only one build can be in Beta Review at a time");
+                logger.info("  4. Beta Contract: Ensure you've signed the beta testing agreement in App Store Connect");
+                logger.info("  5. Beta Information: Fill out Test Information (description, email) in TestFlight settings");
+                logger.info("  6. API Permissions: Ensure your API key has 'App Manager' or 'Admin' role");
+            } else {
+                logger.info(chalk.yellow("⚠️  You can manually submit it for App Store review in App Store Connect."));
+                logger.info(chalk.yellow("⚠️  Visit: https://appstoreconnect.apple.com/apps → Your App → App Store"));
+                console.log();
+                logger.info("Common issues for App Store (production) submissions:");
+                logger.info("  1. App Information: Complete app description, keywords, categories");
+                logger.info("  2. Screenshots: Upload all required screenshots for all device sizes");
+                logger.info("  3. Privacy Policy: Add privacy policy URL if required");
+                logger.info("  4. App Review Information: Fill out contact info and demo account (if needed)");
+                logger.info("  5. Export Compliance: Add ITSAppUsesNonExemptEncryption to ios/Runner/Info.plist");
+                logger.info("  6. Content Rights: Ensure you have rights to all content in your app");
+                logger.info("  7. Version Information: Ensure version number and copyright are correct");
+                logger.info("  8. API Permissions: Ensure your API key has 'App Manager' or 'Admin' role");
+            }
+
+            logger.info("");
+            logger.info("For detailed error, run with FLUX_DEBUG=1 environment variable");
+            process.exit(1);
+        }
 
     } catch (error) {
         spinner.fail(chalk.red("Release failed!"));
