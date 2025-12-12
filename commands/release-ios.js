@@ -180,9 +180,9 @@ export async function releaseIOSCommand(opts = {}) {
         // Step 4a: Upload IPA using Transporter or altool
         spinner.text = chalk.blue("Uploading IPA to App Store Connect...");
 
-        // Both tools look for .p8 in specific directories
-        // Copy .p8 to ~/.appstoreconnect/private_keys/ temporarily
-        // IMPORTANT: altool requires the file to be named AuthKey_<api_key_id>.p8
+        // Both altool and iTMSTransporter automatically search for .p8 files in specific directories
+        // Copy .p8 to ~/.appstoreconnect/private_keys/ with the correct naming convention
+        // IMPORTANT: File must be named AuthKey_<api_key_id>.p8 for both tools to find it
         const os = await import('os');
         const tempKeyDir = path.join(os.homedir(), '.appstoreconnect', 'private_keys');
         const tempKeyPath = path.join(tempKeyDir, `AuthKey_${apiKeyId}.p8`);
@@ -216,7 +216,7 @@ export async function releaseIOSCommand(opts = {}) {
         }
 
         const uploadCmd = uploadTool === 'transporter'
-            ? `xcrun iTMSTransporter -m upload -f "${ipaPath}" -k "${tempKeyPath}" -apiKey "${apiKeyId}" -apiIssuer "${issuerId}" -t Aspera`
+            ? `xcrun iTMSTransporter -m upload -assetFile "${ipaPath}" -apiKey "${apiKeyId}" -apiIssuer "${issuerId}"`
             : `xcrun altool --upload-app --type ios --file "${ipaPath}" --apiKey "${apiKeyId}" --apiIssuer "${issuerId}"`;
 
         try {
