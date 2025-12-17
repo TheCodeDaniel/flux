@@ -7,8 +7,10 @@ import ora from "ora";
 import readline from "readline";
 import { loadConfig } from "../utils/config.js";
 import { logger } from "../utils/logger.js";
-import { generateToken, getAppId, getLatestBuild, submitToTestFlight, getOrCreateAppStoreVersion, assignBuildToVersion, setReleaseNotes, submitForReview } from "../utils/appstore-api.js";
+import { generateToken, getAppId, getLatestBuild, submitToTestFlight, getOrCreateAppStoreVersion, assignBuildToVersion, setReleaseNotes, submitForReview, checkVersionExists } from "../utils/appstore-api.js";
 import { extractIPAMetadata, formatReleaseNotes } from "../utils/ipa-parser.js";
+import { ensureExportCompliance } from "../utils/export-compliance.js";
+import { extractVersionFromPubspec, incrementVersion } from "../utils/version-utils.js";
 
 /**
  * Release iOS app to App Store Connect
@@ -68,6 +70,43 @@ export async function releaseIOSCommand(opts = {}) {
             logger.error(`API key file not found: ${apiKeyPath}`);
             process.exit(1);
         }
+
+        // Step 0: Ensure export compliance is set in Info.plist (prevents App Store errors)
+        await ensureExportCompliance(process.cwd());
+
+        // Step 0.5: Check if version already exists in App Store Connect (fail fast!)
+        logger.info('Checking if version already exists in App Store...');
+
+        const versionInfo = await extractVersionFromPubspec(process.cwd());
+        logger.info(`Current version: ${versionInfo.full}`);
+
+        // Generate token to check version
+        const checkToken = generateToken(appstoreConfig.api_key_id, appstoreConfig.issuer_id, apiKeyPath);
+        const checkAppId = await getAppId(checkToken, appstoreConfig.bundle_id);
+
+        const versionCheck = await checkVersionExists(checkToken, checkAppId, versionInfo.versionString);
+
+        if (versionCheck.exists) {
+            console.log('');
+            logger.error(`❌ Version ${versionInfo.versionString} already exists in App Store Connect!`);
+            logger.error(`   Current state: ${versionCheck.state}`);
+            console.log('');
+            logger.info('Please update your version in:');
+            logger.info(`  • pubspec.yaml (currently: ${versionInfo.full})`);
+            logger.info(`  • Change to a new version like: ${incrementVersion(versionInfo.versionString)}+${versionInfo.buildNumber}`);
+            console.log('');
+            logger.info('Possible version states:');
+            logger.info('  PREPARE_FOR_SUBMISSION - Version is being prepared');
+            logger.info('  WAITING_FOR_REVIEW - Submitted and waiting for review');
+            logger.info('  IN_REVIEW - Currently being reviewed by Apple');
+            logger.info('  READY_FOR_SALE - Live on the App Store');
+            logger.info('  REJECTED - Rejected by Apple (can be reused)');
+            console.log('');
+            process.exit(1);
+        }
+
+        logger.info(`✅ Version ${versionInfo.versionString} is available`);
+        console.log('');
 
         // Step 1: Build IPA
         const buildMessage = opts.obfuscate
@@ -158,13 +197,18 @@ export async function releaseIOSCommand(opts = {}) {
         console.log(chalk.gray(`  Build path: ${ipaPath}`));
         console.log();
 
-        // Step 3: Prompt user to deploy
-        const shouldDeploy = await promptDeploy(opts.track);
+        // Step 3: Prompt user to deploy (unless --skip-confirm is set)
+        if (opts.skipConfirm) {
+            logger.info('⏭️  Skipping confirmation (--skip-confirm flag set)');
+            console.log();
+        } else {
+            const shouldDeploy = await promptDeploy(opts.track);
 
-        if (!shouldDeploy) {
-            console.log(chalk.yellow("⏸️  Deployment cancelled."));
-            console.log(chalk.gray(`  IPA ready at: ${ipaPath}`));
-            process.exit(0);
+            if (!shouldDeploy) {
+                console.log(chalk.yellow("⏸️  Deployment cancelled."));
+                console.log(chalk.gray(`  IPA ready at: ${ipaPath}`));
+                process.exit(0);
+            }
         }
 
         // Step 4: Deploy to App Store Connect
@@ -257,11 +301,10 @@ export async function releaseIOSCommand(opts = {}) {
                 throw new Error(`App not found in App Store Connect with bundle ID: ${bundleId}`);
             }
 
-            // Wait for the build to process (Apple needs time even after upload completes)
-            spinner.text = chalk.blue("Waiting for build to process (15 seconds)...");
-            await sleep(15000);
-
+            // Wait for the build to process - this can take 5-15 minutes
+            spinner.stop(); // Stop spinner to show clean output from getLatestBuild
             const buildId = await getLatestBuild(token, appId);
+            spinner.start(); // Resume spinner for next steps
             if (!buildId) {
                 throw new Error("Build not found. It may still be processing. Check App Store Connect and try again in a few minutes.");
             }
@@ -426,12 +469,6 @@ async function promptDeploy(track) {
     });
 }
 
-/**
- * Sleep helper
- */
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
 
 /**
  * Log deployment to .flux-mobile/deployments.json

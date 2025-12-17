@@ -64,6 +64,7 @@ program
     .option("--define <value...>", "Extra --dart-define values")
     .option("--obfuscate", "Obfuscate Dart code for increased security", false)
     .option("--verbose", "Enable verbose build output", false)
+    .option("--skip-confirm", "Skip confirmation prompts (for CI/CD)", false)
     .action(async (platform, opts) => {
         // Validate platform
         const normalizedPlatform = platform.toLowerCase();
@@ -98,6 +99,7 @@ program
                 define: opts.define,
                 obfuscate: opts.obfuscate,
                 verbose: opts.verbose,
+                skipConfirm: opts.skipConfirm,
             });
         } else if (normalizedPlatform === "ios") {
             await releaseIOSCommand({
@@ -108,6 +110,7 @@ program
                 define: opts.define,
                 obfuscate: opts.obfuscate,
                 verbose: opts.verbose,
+                skipConfirm: opts.skipConfirm,
             });
         }
     });
