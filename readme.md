@@ -51,7 +51,6 @@ Flux Mobile CLI solves these problems:
 - **Unified workflow**: Build + Deploy in one command for both platforms
 - **Full iOS automation**: Build IPA → Confirm → Upload → Wait for processing → Submit for review
 - **Full Android automation**: Build AAB → Confirm → Upload → Deploy to any track
-- **Smart version management**: Auto-detect conflicts BEFORE building (saves 5-10 min per conflict)
 - **iOS build processing**: Wait for Apple validation with real-time progress (5-15 min avg)
 - **Export compliance**: Auto-configure Info.plist for App Store requirements
 - Interactive deployment confirmation with `--skip-confirm` for CI/CD
@@ -91,7 +90,6 @@ Flux Mobile CLI solves these problems:
 - ✅ **Optional code obfuscation** (use --obfuscate flag)
 - ✅ Build AAB with flavors
 - ✅ Deploy to Google Play (internal/alpha/beta/production)
-- ✅ **Version conflict detection**: Check Google Play Console BEFORE building (fail fast)
 - ✅ Interactive deployment confirmation (skip with `--skip-confirm` for CI/CD)
 - ✅ Animated build progress with live spinner
 - ✅ Multi-language release notes
@@ -106,7 +104,6 @@ Flux Mobile CLI solves these problems:
 - ✅ Automatic TestFlight submission
 - ✅ **Full production automation**: Version extraction → Assignment → Release notes → Submit for review
 - ✅ **Smart build processing**: Wait for Apple validation with real-time progress (5-15 min avg)
-- ✅ **Version conflict detection**: Check App Store Connect BEFORE building (fail fast)
 - ✅ **Export compliance auto-fix**: Automatically adds ITSAppUsesNonExemptEncryption to Info.plist
 - ✅ Interactive deployment confirmation (skip with `--skip-confirm` for CI/CD)
 - ✅ Animated build progress with live spinner
@@ -137,7 +134,6 @@ Flux Mobile CLI solves these problems:
 - **Self-update command**: `fluxm upgrade` to get latest version
 - **Unified release workflow**: Build + Deploy in one command
 - **Optional code obfuscation**: Use `--obfuscate` flag for increased security
-- **Version conflict detection**: Check store BEFORE building to fail fast on conflicts (iOS & Android)
 - **Export compliance auto-fix**: Automatically configures iOS Info.plist for App Store (iOS)
 - **Smart build processing**: Wait for Apple validation with progress updates (iOS)
 - Build Android (AAB) and iOS (IPA) apps
@@ -240,7 +236,6 @@ fluxm release android --track production --flavor prod --env-file .env.prod --no
 
 This command will:
 
-- ✅ Check version conflicts in Google Play Console (fail fast if version exists)
 - ✅ Build AAB in release mode
 - ✅ Parse build output for AAB path
 - ✅ Prompt you to confirm deployment (Y/n) - use `--skip-confirm` to skip for CI/CD
@@ -281,7 +276,6 @@ fluxm release ios --track production --flavor prod --env-file .env.prod --notes 
 **For TestFlight**, this command will:
 
 - ✅ Auto-add export compliance key to Info.plist (if missing)
-- ✅ Check version conflicts in App Store Connect (fail fast if version exists)
 - ✅ Build IPA in release mode
 - ✅ Parse build output for IPA path
 - ✅ Prompt you to confirm deployment (Y/n) - use `--skip-confirm` to skip for CI/CD
@@ -393,15 +387,14 @@ fluxm release <platform> --track <track> [options]
 
 **Workflow:**
 
-1. **Checks version conflicts** in App Store/Play Store (fails fast if version exists)
-2. **(iOS only)** Auto-configures export compliance in Info.plist if needed
-3. Builds the app (AAB for Android, IPA for iOS)
-4. Parses Flutter build output for artifact path
-5. **Prompts you to confirm deployment** (Y/n) — skip with `--skip-confirm`
-6. Uploads to App Store Connect or Google Play Store
-7. **(iOS only)** Waits for Apple build processing with real-time progress (5-15 min avg)
-8. Assigns to specified track
-9. Logs deployment to `.flux-mobile/deployments.json`
+1. **(iOS only)** Auto-configures export compliance in Info.plist if needed
+2. Builds the app (AAB for Android, IPA for iOS)
+3. Parses Flutter build output for artifact path
+4. **Prompts you to confirm deployment** (Y/n) — skip with `--skip-confirm`
+5. Uploads to App Store Connect or Google Play Store
+6. **(iOS only)** Waits for Apple build processing with real-time progress (5-15 min avg)
+7. Assigns to specified track
+8. Logs deployment to `.flux-mobile/deployments.json`
 
 **Examples:**
 
@@ -433,7 +426,6 @@ fluxm release ios --track testflight --skip-confirm --notes "Automated TestFligh
 
 **Android Workflow:**
 
-- Checks version conflicts in Google Play Console (all tracks)
 - Runs `flutter build appbundle --release`
 - Optionally obfuscates code with `--obfuscate` flag
 - Parses AAB path from build output
@@ -445,7 +437,6 @@ fluxm release ios --track testflight --skip-confirm --notes "Automated TestFligh
 **iOS Workflow (TestFlight):**
 
 - Auto-adds export compliance key to Info.plist if missing
-- Checks version conflicts in App Store Connect
 - Runs `flutter build ipa --release`
 - Optionally obfuscates code with `--obfuscate` flag
 - Parses IPA path from build output
@@ -600,22 +591,6 @@ chmod 600 keys/*.json
 
 ### Smart Features
 
-**Version Conflict Detection** (iOS & Android)
-
-Flux Mobile CLI checks if your version already exists in the store BEFORE building:
-
-```bash
-# If version 1.2.3 already exists in App Store/Play Store:
-❌ Version 1.2.3 already exists in App Store Connect!
-   Current state: READY_FOR_SALE
-
-Please update your version in:
-  • pubspec.yaml (currently: 1.2.3+45)
-  • Change to: 1.2.4+45
-```
-
-This saves you 5-10 minutes of build time by failing fast on conflicts.
-
 **Export Compliance Auto-Fix** (iOS only)
 
 Automatically adds the required export compliance key to `ios/Runner/Info.plist`:
@@ -655,9 +630,6 @@ A: They're built directly by Flutter. Android AAB: `build/app/outputs/bundle/`, 
 **Q: Can I skip the deployment prompt?**
 A: Yes! Use the `--skip-confirm` flag for CI/CD automation: `fluxm release android --track production --skip-confirm`
 
-**Q: What if my app version already exists in the store?**
-A: Flux Mobile CLI automatically checks for version conflicts BEFORE building. If a version exists, it will fail fast with a helpful error message suggesting the next available version.
-
 ### Android
 
 **Q: 403 permission error?**
@@ -689,9 +661,6 @@ A: Usually 5-15 minutes. Flux Mobile CLI waits automatically and shows real-time
 **Q: What is export compliance?**
 A: A required key in Info.plist for App Store submissions. Flux Mobile CLI automatically adds `ITSAppUsesNonExemptEncryption = false` if missing.
 
-**Q: Will it waste time building if version conflicts exist?**
-A: No! Version conflicts are checked BEFORE building, so you get instant feedback without wasting 5-10 minutes on a build.
-
 ---
 
 ## Development & Contributing
@@ -722,7 +691,6 @@ npm run test:unit
 - Google Play deployment (all tracks)
 - App Store Connect deployment (TestFlight & Production)
 - Full iOS production automation with auto-review submission
-- **Version conflict detection** (iOS & Android) - checks BEFORE building
 - **Export compliance auto-fix** (iOS) - auto-configures Info.plist
 - **Smart build processing** (iOS) - waits for Apple validation with progress
 - Interactive deployment confirmation prompts with `--skip-confirm` for CI/CD

@@ -7,8 +7,6 @@ import readline from "readline";
 import { loadConfig } from "../utils/config.js";
 import { logger } from "../utils/logger.js";
 import { google } from "googleapis";
-import { extractVersionFromPubspec } from "../utils/version-utils.js";
-import { checkVersionExistsPlayStore } from "../utils/playstore-api.js";
 
 /**
  * Release Android app to Google Play Store
@@ -51,43 +49,6 @@ export async function releaseAndroidCommand(opts = {}) {
             logger.error(`Service account file not found: ${serviceAccountPath}`);
             process.exit(1);
         }
-
-        // Check version before building (fail fast on conflicts)
-        logger.info('Checking if version already exists in Google Play Console...');
-        const versionInfo = await extractVersionFromPubspec(process.cwd());
-        logger.info(`Current version: ${versionInfo.full}`);
-
-        // Set up Google Play API authentication
-        const checkAuth = new google.auth.GoogleAuth({
-            keyFile: serviceAccountPath,
-            scopes: ["https://www.googleapis.com/auth/androidpublisher"],
-        });
-
-        const versionCheck = await checkVersionExistsPlayStore(
-            checkAuth,
-            playstoreConfig.package_name,
-            versionInfo.buildNumber
-        );
-
-        if (versionCheck.exists) {
-            console.log('');
-            logger.error(`❌ Version code ${versionInfo.buildNumber} already exists in Google Play Console!`);
-            logger.error(`   Found in track: ${versionCheck.track}`);
-            logger.error(`   Status: ${versionCheck.status}`);
-            console.log('');
-            logger.info('Please update your version in:');
-            logger.info(`  • pubspec.yaml (currently: ${versionInfo.full})`);
-            logger.info(`  • Version code must be higher than ${versionInfo.buildNumber}`);
-            logger.info(`  • Example: ${versionInfo.versionString}+${parseInt(versionInfo.buildNumber) + 1}`);
-            console.log('');
-            logger.info('Note: Google Play requires version codes to always increment');
-            logger.info('      You cannot reuse a version code, even if it was removed');
-            console.log('');
-            process.exit(1);
-        }
-
-        logger.info(`✅ Version code ${versionInfo.buildNumber} is available`);
-        console.log('');
 
         // Step 1: Build AAB
         const buildMessage = opts.obfuscate
