@@ -20,6 +20,7 @@ describe('Input Validation Tests', () => {
         test('should handle case insensitivity for platforms', () => {
             expect(['android', 'ios'].includes('Android'.toLowerCase())).toBe(true);
             expect(['android', 'ios'].includes('IOS'.toLowerCase())).toBe(true);
+            expect(['android', 'ios'].includes('ios'.toLowerCase())).toBe(true);
             expect(['android', 'ios'].includes('ANDROID'.toLowerCase())).toBe(true);
         });
     });
