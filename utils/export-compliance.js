@@ -40,7 +40,7 @@ export async function ensureExportCompliance(projectDir) {
         logger.warn('⚠️  Export compliance key missing in Info.plist');
         logger.info('Adding ITSAppUsesNonExemptEncryption = false');
         logger.info('ℹ️  This prevents "Missing Export Compliance" errors in App Store Connect');
-        logger.info('ℹ️  If your app uses encryption, set this to true in ios/Runner/Info.plist');
+        logger.info('ℹ️  If your app uses encryption, stop this process and set this to true in ios/Runner/Info.plist');
         console.log('');
 
         // Add the key

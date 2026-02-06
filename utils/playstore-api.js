@@ -30,7 +30,7 @@ export async function checkVersionExistsPlayStore(auth, packageName, versionCode
                     androidPublisher.edits.delete({
                         packageName,
                         editId,
-                    }).catch(() => {}); // Ignore cleanup errors
+                    }).catch(() => { }); // Ignore cleanup errors
                 });
             });
 
