@@ -1,12 +1,11 @@
-import { spawn } from "child_process";
 import fs from "fs-extra";
 import path from "path";
 import chalk from "chalk";
 import ora from "ora";
-import readline from "readline";
 import { loadConfig } from "../utils/config.js";
 import { logger } from "../utils/logger.js";
 import { google } from "googleapis";
+import { runFlutterBuild, promptDeploy, logDeployment } from "../utils/release-helpers.js";
 
 /**
  * Release Android app to Google Play Store
@@ -137,7 +136,7 @@ export async function releaseAndroidCommand(opts = {}) {
             logger.info('⏭️  Skipping confirmation (--skip-confirm flag set)');
             console.log();
         } else {
-            const shouldDeploy = await promptDeploy(opts.track);
+            const shouldDeploy = await promptDeploy(opts.track, "Play Store");
 
             if (!shouldDeploy) {
                 console.log(chalk.yellow("⏸️  Deployment cancelled."));
@@ -251,29 +250,8 @@ export async function releaseAndroidCommand(opts = {}) {
 }
 
 /**
- * Prompt user to confirm deployment
- */
-async function promptDeploy(track) {
-    return new Promise((resolve) => {
-        const rl = readline.createInterface({
-            input: process.stdin,
-            output: process.stdout,
-        });
-
-        rl.question(
-            chalk.cyan(`📤 Deploy to Play Store (${track} track)? (Y/n): `),
-            (answer) => {
-                rl.close();
-                const normalized = answer.trim().toLowerCase();
-                // Default to 'yes' if user just presses Enter
-                resolve(normalized === "" || normalized === "y" || normalized === "yes");
-            }
-        );
-    });
-}
-
-/**
  * Format release notes for Google Play API
+ * Note: Google Play uses "language" key, App Store uses "locale"
  */
 function formatReleaseNotes(notesInput) {
     if (!notesInput) {
@@ -294,70 +272,3 @@ function formatReleaseNotes(notesInput) {
     return [{ language: "en-US", text: "Bug fixes and improvements" }];
 }
 
-/**
- * Run Flutter build with animated spinner
- */
-function runFlutterBuild(args, spinner, verbose) {
-    return new Promise((resolve, reject) => {
-        const flutter = spawn("flutter", args, {
-            cwd: process.cwd(),
-        });
-
-        let stdout = "";
-        let stderr = "";
-
-        flutter.stdout.on("data", (data) => {
-            const output = data.toString();
-            stdout += output;
-            if (verbose) {
-                // In verbose mode, stop spinner and show output
-                spinner.stop();
-                process.stdout.write(output);
-            }
-        });
-
-        flutter.stderr.on("data", (data) => {
-            stderr += data.toString();
-        });
-
-        flutter.on("close", (code) => {
-            if (code === 0) {
-                resolve(stdout);
-            } else {
-                if (stderr) {
-                    console.error(stderr);
-                }
-                resolve(null);
-            }
-        });
-
-        flutter.on("error", (error) => {
-            console.error(error.message);
-            resolve(null);
-        });
-    });
-}
-
-/**
- * Log deployment to .flux-mobile/deployments.json
- */
-async function logDeployment(data) {
-    const logDir = path.join(process.cwd(), ".flux-mobile");
-    await fs.ensureDir(logDir);
-
-    const logFile = path.join(logDir, "deployments.json");
-
-    let logs = [];
-    if (await fs.pathExists(logFile)) {
-        const content = await fs.readFile(logFile, "utf8");
-        try {
-            logs = JSON.parse(content);
-        } catch {
-            logs = [];
-        }
-    }
-
-    logs.push(data);
-
-    await fs.writeFile(logFile, JSON.stringify(logs, null, 2));
-}

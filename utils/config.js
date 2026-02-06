@@ -1,12 +1,12 @@
 import fs from "fs";
+import path from "path";
 import yaml from "js-yaml";
 import { logger } from "./logger.js";
 
 export function loadConfig() {
-    const configPath = "./flux-mobile.yml";
+    const configPath = path.join(process.cwd(), "flux-mobile.yml");
     if (!fs.existsSync(configPath)) {
-        logger.error("flux-mobile.yml not found. Please run `fluxm init` first.");
-        process.exit(1);
+        throw new Error(`flux-mobile.yml not found in ${process.cwd()}. Make sure you are in the project root directory, or run \`fluxm init\` first.`);
     }
 
     try {
@@ -14,8 +14,7 @@ export function loadConfig() {
         const config = yaml.load(file);
         return config;
     } catch (e) {
-        logger.error("Error parsing flux-mobile.yml: " + e.message);
-        process.exit(1);
+        throw new Error("Error parsing flux-mobile.yml: " + e.message);
     }
 }
 
@@ -23,7 +22,7 @@ export function getFramework(config) {
     // Use explicit value if set, otherwise auto-detect
     if (config.platform) return config.platform;
 
-    if (fs.existsSync("pubspec.yaml")) return "flutter";
-    if (fs.existsSync("package.json")) return "react-native";
+    if (fs.existsSync(path.join(process.cwd(), "pubspec.yaml"))) return "flutter";
+    if (fs.existsSync(path.join(process.cwd(), "package.json"))) return "react-native";
     return "unknown";
 }

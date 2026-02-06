@@ -44,10 +44,16 @@ export async function extractIPAMetadata(ipaPath) {
             .toString()
             .trim();
 
-        const displayName = execSync(`/usr/libexec/PlistBuddy -c "Print :CFBundleDisplayName" "${infoPlistPath}"`)
-            .toString()
-            .trim()
-            .catch(() => execSync(`/usr/libexec/PlistBuddy -c "Print :CFBundleName" "${infoPlistPath}"`).toString().trim());
+        let displayName;
+        try {
+            displayName = execSync(`/usr/libexec/PlistBuddy -c "Print :CFBundleDisplayName" "${infoPlistPath}"`)
+                .toString()
+                .trim();
+        } catch {
+            displayName = execSync(`/usr/libexec/PlistBuddy -c "Print :CFBundleName" "${infoPlistPath}"`)
+                .toString()
+                .trim();
+        }
 
         logger.info(`📱 App: ${displayName}`);
         logger.info(`📦 Version: ${versionString} (${buildNumber})`);

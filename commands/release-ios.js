@@ -1,15 +1,14 @@
-import { spawn } from "child_process";
 import { execSync } from "child_process";
 import fs from "fs-extra";
 import path from "path";
 import chalk from "chalk";
 import ora from "ora";
-import readline from "readline";
 import { loadConfig } from "../utils/config.js";
 import { logger } from "../utils/logger.js";
-import { generateToken, getLatestBuild, submitToTestFlight, getOrCreateAppStoreVersion, assignBuildToVersion, setReleaseNotes, submitForReview } from "../utils/appstore-api.js";
+import { generateToken, getAppId, getLatestBuild, submitToTestFlight, getOrCreateAppStoreVersion, assignBuildToVersion, setReleaseNotes, submitForReview } from "../utils/appstore-api.js";
 import { extractIPAMetadata, formatReleaseNotes } from "../utils/ipa-parser.js";
 import { ensureExportCompliance } from "../utils/export-compliance.js";
+import { runFlutterBuild, promptDeploy, logDeployment } from "../utils/release-helpers.js";
 
 /**
  * Release iOS app to App Store Connect
@@ -167,7 +166,7 @@ export async function releaseIOSCommand(opts = {}) {
             logger.info('⏭️  Skipping confirmation (--skip-confirm flag set)');
             console.log();
         } else {
-            const shouldDeploy = await promptDeploy(opts.track);
+            const shouldDeploy = await promptDeploy(opts.track, "App Store Connect");
 
             if (!shouldDeploy) {
                 console.log(chalk.yellow("⏸️  Deployment cancelled."));
@@ -198,6 +197,17 @@ export async function releaseIOSCommand(opts = {}) {
 
         // Create directory if it doesn't exist
         fs.ensureDirSync(tempKeyDir);
+
+        // Register cleanup handler for process interruption (Ctrl+C, kill)
+        const cleanupTempKey = () => {
+            try {
+                if (fs.existsSync(tempKeyPath)) {
+                    fs.unlinkSync(tempKeyPath);
+                }
+            } catch { /* best effort */ }
+        };
+        process.on('SIGINT', cleanupTempKey);
+        process.on('SIGTERM', cleanupTempKey);
 
         // Verify source file exists
         if (!fs.existsSync(apiKeyPath)) {
@@ -248,6 +258,10 @@ export async function releaseIOSCommand(opts = {}) {
             }
 
             process.exit(1);
+        } finally {
+            // Remove interrupt handlers once temp key is cleaned up
+            process.removeListener('SIGINT', cleanupTempKey);
+            process.removeListener('SIGTERM', cleanupTempKey);
         }
 
         // Step 4b: Process build and assign to track
@@ -368,93 +382,3 @@ export async function releaseIOSCommand(opts = {}) {
     }
 }
 
-/**
- * Run Flutter build with animated spinner
- */
-function runFlutterBuild(args, spinner, verbose) {
-    return new Promise((resolve) => {
-        const flutter = spawn("flutter", args, {
-            cwd: process.cwd(),
-        });
-
-        let stdout = "";
-        let stderr = "";
-
-        flutter.stdout.on("data", (data) => {
-            const output = data.toString();
-            stdout += output;
-            if (verbose) {
-                // In verbose mode, stop spinner and show output
-                spinner.stop();
-                process.stdout.write(output);
-            }
-        });
-
-        flutter.stderr.on("data", (data) => {
-            stderr += data.toString();
-        });
-
-        flutter.on("close", (code) => {
-            if (code === 0) {
-                resolve(stdout);
-            } else {
-                if (stderr) {
-                    console.error(stderr);
-                }
-                resolve(null);
-            }
-        });
-
-        flutter.on("error", (error) => {
-            console.error(error.message);
-            resolve(null);
-        });
-    });
-}
-
-/**
- * Prompt user to confirm deployment
- */
-async function promptDeploy(track) {
-    return new Promise((resolve) => {
-        const rl = readline.createInterface({
-            input: process.stdin,
-            output: process.stdout,
-        });
-
-        rl.question(
-            chalk.cyan(`📤 Deploy to App Store Connect (${track} track)? (Y/n): `),
-            (answer) => {
-                rl.close();
-                const normalized = answer.trim().toLowerCase();
-                // Default to 'yes' if user just presses Enter
-                resolve(normalized === "" || normalized === "y" || normalized === "yes");
-            }
-        );
-    });
-}
-
-
-/**
- * Log deployment to .flux-mobile/deployments.json
- */
-async function logDeployment(data) {
-    const logDir = path.join(process.cwd(), ".flux-mobile");
-    await fs.ensureDir(logDir);
-
-    const logFile = path.join(logDir, "deployments.json");
-
-    let logs = [];
-    if (await fs.pathExists(logFile)) {
-        const content = await fs.readFile(logFile, "utf8");
-        try {
-            logs = JSON.parse(content);
-        } catch {
-            logs = [];
-        }
-    }
-
-    logs.push(data);
-
-    await fs.writeFile(logFile, JSON.stringify(logs, null, 2));
-}

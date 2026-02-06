@@ -42,7 +42,7 @@ describe('Config Utils', () => {
     });
 
     test('should handle malformed flux-mobile.yml', async () => {
-        await fs.writeFile(fluxYmlPath, 'invalid yaml content {{{');
+        await fs.writeFile(fluxYmlPath, 'key: [invalid\n  bad: indent');
 
         expect(() => loadConfig()).toThrow();
     });

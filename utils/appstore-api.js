@@ -82,6 +82,11 @@ async function makeRequest(token, method, endpoint, body = null) {
             });
         });
 
+        req.setTimeout(30000, () => {
+            req.destroy();
+            reject(new Error("Request timed out after 30 seconds. Check your network connection and try again."));
+        });
+
         req.on("error", reject);
 
         if (body) {
@@ -160,6 +165,8 @@ export async function getLatestBuild(token, appId) {
     const maxAttempts = (timeoutMinutes * 60 * 1000) / pollIntervalMs; // 180 attempts
 
     let lastMinuteLogged = -1;
+    let unknownStateCount = 0;
+    const startTime = Date.now();
 
     for (let i = 0; i < maxAttempts; i++) {
         const response = await makeRequest(token, "GET", endpoint);
@@ -170,9 +177,9 @@ export async function getLatestBuild(token, appId) {
             const version = build.attributes.version;
             const buildNumber = build.attributes.buildNumber;
 
-            // Calculate elapsed time
-            const elapsedSeconds = Math.floor((i * pollIntervalMs) / 1000);
-            const elapsedMinutes = Math.floor(elapsedSeconds / 60);
+            // Calculate elapsed time from wall clock
+            const elapsedMs = Date.now() - startTime;
+            const elapsedMinutes = Math.floor(elapsedMs / 60000);
 
             // Check if build is ready
             if (processingState === "VALID") {
@@ -192,7 +199,8 @@ export async function getLatestBuild(token, appId) {
             }
 
             if (processingState === "PROCESSING") {
-                // Show progress update every minute (every 6 polls at 10s interval)
+                unknownStateCount = 0; // reset on known state
+                // Show progress update every minute
                 if (elapsedMinutes > lastMinuteLogged) {
                     lastMinuteLogged = elapsedMinutes;
                     logger.info(`⏳ Still processing... (${elapsedMinutes} minute${elapsedMinutes !== 1 ? 's' : ''} elapsed)`);
@@ -207,8 +215,15 @@ export async function getLatestBuild(token, appId) {
                 continue;
             }
 
-            // Unknown state
-            logger.warn(`Unknown processing state: ${processingState}`);
+            // Unknown/unexpected state — stop after 3 consecutive occurrences
+            unknownStateCount++;
+            logger.warn(`Unexpected processing state: ${processingState}`);
+            if (unknownStateCount >= 3) {
+                console.log('');
+                logger.error(`❌ Build entered unexpected state: ${processingState}`);
+                logger.info("   Check App Store Connect for details: https://appstoreconnect.apple.com");
+                throw new Error(`Build entered unexpected state: ${processingState}. Check App Store Connect.`);
+            }
             await sleep(pollIntervalMs);
             continue;
         }

@@ -20,7 +20,7 @@ program
 program
     .command('init')
     .description('Create flux-mobile.yml and (for Flutter) register it in pubspec.yaml')
-    .option('-f, --force', 'overwrite existing flux-mobile.yml (backups will be created)', false)
+    .option('-f, --force', 'overwrite existing flux-mobile.yml (a backup will be saved)', false)
     .action(async (opts) => {
         try {
             await initCommand(process.cwd(), { force: !!opts.force });

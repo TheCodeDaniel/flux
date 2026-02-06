@@ -27,7 +27,7 @@ describe('Init Command', () => {
     });
 
     test('should detect Flutter project and update pubspec.yaml', async () => {
-        // Create mock pubspec.yaml
+        // Create mock pubspec.yaml (must include top-level flutter: section)
         const mockPubspec = `name: test_app
 description: A test Flutter app
 version: 1.0.0+1
@@ -38,6 +38,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+
+flutter:
+  uses-material-design: true
 `;
         await fs.writeFile(path.join(testDir, 'pubspec.yaml'), mockPubspec);
 
@@ -56,8 +59,8 @@ dependencies:
 
         await initCommand(testDir, { force: true });
 
-        // Should create backup file
-        const backupFiles = (await fs.readdir(testDir)).filter(f => f.startsWith('flux-mobile.yml.backup'));
+        // Should create backup file (prefix: flux-mobile.yml.backup.)
+        const backupFiles = (await fs.readdir(testDir)).filter(f => f.startsWith('flux-mobile.yml.backup.'));
         expect(backupFiles.length).toBeGreaterThan(0);
     });
 
